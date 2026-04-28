@@ -24,8 +24,9 @@ Stages:
   3. Build
   4. Run CTest
   5. Run clang-format in non-mutating check mode
-  6. Run Cppcheck static analysis
-  7. Optionally launch the app briefly as a smoke run
+  6. Generate Doxygen documentation
+  7. Run Cppcheck static analysis
+  8. Optionally launch the app briefly as a smoke run
 
 Options:
   --preset NAME      CMake preset to use; default: ${DEFAULT_PRESET}
@@ -219,6 +220,42 @@ stage_cppcheck() {
     return 1
 }
 
+stage_doxygen() {
+    if ! command -v doxygen >/dev/null 2>&1; then
+        record_result "Doxygen" "FAIL" "doxygen not found"
+        return 1
+    fi
+
+    local build_dir="${BUILD_DIR}"
+    if [[ -z "${build_dir}" ]]; then
+        build_dir="${PROJECT_ROOT}/build/${PRESET}"
+    fi
+    if [[ "${build_dir}" != /* ]]; then
+        build_dir="${PROJECT_ROOT}/${build_dir}"
+    fi
+
+    log "Generating Doxygen documentation."
+    if ! run_command cmake --build "${build_dir}" --target doxygen; then
+        record_result "Doxygen" "FAIL" "Documentation generation failed"
+        return 1
+    fi
+
+    local warnings_file="${build_dir}/doxygen/warnings.txt"
+    local index_file="${build_dir}/doxygen/html/index.html"
+    if [[ ! -f "${index_file}" ]]; then
+        record_result "Doxygen" "FAIL" "Missing HTML entry point"
+        return 1
+    fi
+
+    if [[ -s "${warnings_file}" ]]; then
+        record_result "Doxygen" "FAIL" "warnings.txt is not empty"
+        return 1
+    fi
+
+    record_result "Doxygen" "PASS" "HTML generated without warnings"
+    return 0
+}
+
 stage_smoke_run() {
     if [[ "${NO_RUN}" -eq 1 ]]; then
         record_result "Launch App" "SKIP" "--no-run selected"
@@ -266,6 +303,7 @@ main() {
     require_command cmake || missing=1
     require_command clang-format || missing=1
     require_command cppcheck || missing=1
+    require_command doxygen || missing=1
     require_command timeout || missing=1
     if [[ "${missing}" -ne 0 ]]; then
         record_result "Prerequisites" "FAIL" "Required command missing"
@@ -279,6 +317,7 @@ main() {
     stage_build || failed=1
     stage_tests || failed=1
     stage_format || failed=1
+    stage_doxygen || failed=1
     stage_cppcheck || failed=1
     stage_smoke_run || failed=1
 

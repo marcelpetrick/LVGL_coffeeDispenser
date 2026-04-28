@@ -29,6 +29,28 @@ endif()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+    set(COFFEE_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/doxygen")
+    set(COFFEE_DOXYGEN_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/Doxyfile.in"
+        "${COFFEE_DOXYGEN_CONFIG_FILE}"
+        @ONLY
+    )
+
+    add_custom_target(doxygen
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${COFFEE_DOXYGEN_OUTPUT_DIRECTORY}"
+        COMMAND ${DOXYGEN_EXECUTABLE} "${COFFEE_DOXYGEN_CONFIG_FILE}"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        COMMENT "Generating HTML API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+    message(STATUS "Doxygen not found: the 'doxygen' target will be unavailable")
+endif()
 
 set(CONFIG_LV_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(CONFIG_LV_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
