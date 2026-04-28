@@ -11,7 +11,7 @@ static void home_cb(lv_event_t *e)
 void coffee_screen_show_error(coffee_ui_manager_t *ui)
 {
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 34, 0);
     lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(screen, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);

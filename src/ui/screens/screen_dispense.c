@@ -12,7 +12,7 @@ void coffee_screen_show_dispense(coffee_ui_manager_t *ui)
 {
     const coffee_beverage_t *beverage = coffee_app_controller_selected(ui->app);
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 32, 0);
     lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(screen, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -68,7 +68,7 @@ void coffee_screen_show_completion(coffee_ui_manager_t *ui, bool cancelled)
 {
     const coffee_beverage_t *beverage = coffee_app_controller_selected(ui->app);
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 34, 0);
     lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(screen, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);

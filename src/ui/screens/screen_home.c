@@ -1,5 +1,6 @@
 #include "ui/screens/screens.h"
 
+#include "ui/assets/beverage_icons.h"
 #include "ui/ui_manager.h"
 #include "ui/ui_theme.h"
 
@@ -37,12 +38,40 @@ static lv_obj_t *make_button(lv_obj_t *parent, const char *text, lv_event_cb_t c
     return btn;
 }
 
+static const lv_image_dsc_t *icon_for_beverage(coffee_beverage_id_t id)
+{
+    switch (id) {
+    case COFFEE_BEV_COFFEE:
+        return &coffee_icon_coffee;
+    case COFFEE_BEV_ESPRESSO:
+        return &coffee_icon_espresso;
+    case COFFEE_BEV_LATTE_MACCHIATO:
+        return &coffee_icon_latte_macchiato;
+    case COFFEE_BEV_CAPPUCCINO:
+        return &coffee_icon_cappuccino;
+    case COFFEE_BEV_AMERICANO:
+        return &coffee_icon_americano;
+    case COFFEE_BEV_HOT_WATER:
+        return &coffee_icon_hot_water;
+    default:
+        return &coffee_icon_coffee;
+    }
+}
+
 void coffee_screen_show_splash(coffee_ui_manager_t *ui)
 {
     LV_UNUSED(ui);
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 32, 0);
+
+    lv_obj_t *halo = lv_obj_create(screen);
+    lv_obj_remove_style_all(halo);
+    lv_obj_set_size(halo, 178, 178);
+    lv_obj_align(halo, LV_ALIGN_CENTER, 0, -36);
+    lv_obj_set_style_radius(halo, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(halo, coffee_ui_color_primary(), 0);
+    lv_obj_set_style_bg_opa(halo, LV_OPA_20, 0);
 
     lv_obj_t *title = lv_label_create(screen);
     lv_label_set_text(title, "Coffee Dispenser");
@@ -60,7 +89,7 @@ void coffee_screen_show_splash(coffee_ui_manager_t *ui)
 void coffee_screen_show_home(coffee_ui_manager_t *ui)
 {
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 18, 0);
     lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(screen, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -70,8 +99,7 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
     lv_obj_t *header = lv_obj_create(screen);
     lv_obj_set_width(header, LV_PCT(100));
     lv_obj_set_height(header, 70);
-    lv_obj_set_style_bg_color(header, coffee_ui_color_panel(), 0);
-    lv_obj_set_style_border_width(header, 0, 0);
+    coffee_ui_apply_glass_panel(header, LV_OPA_70);
     lv_obj_set_style_radius(header, 8, 0);
     lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER,
@@ -106,20 +134,23 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
         lv_obj_set_grid_cell(card, LV_GRID_ALIGN_STRETCH, (int32_t)(i % 3), 1,
                              LV_GRID_ALIGN_STRETCH, (int32_t)(i / 3), 1);
         lv_obj_set_style_radius(card, 8, 0);
+        coffee_ui_apply_glass_panel(card, LV_OPA_70);
         lv_obj_set_style_bg_color(card,
                                   beverages[i].id == COFFEE_BEV_HOT_WATER ? lv_color_hex(0x2c6f8f)
                                                                           : coffee_ui_color_panel(),
                                   0);
-        lv_obj_set_style_border_width(card, 1, 0);
-        lv_obj_set_style_border_color(card, lv_color_hex(0x3b4652), 0);
+        lv_obj_set_style_bg_grad_color(card,
+                                       beverages[i].id == COFFEE_BEV_HOT_WATER
+                                           ? lv_color_hex(0x1c465d)
+                                           : lv_color_hex(0x2d3540),
+                                       0);
         lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
                               LV_FLEX_ALIGN_CENTER);
 
-        lv_obj_t *icon = lv_label_create(card);
-        lv_label_set_text(icon, beverages[i].symbol);
-        lv_obj_set_style_text_font(icon, &lv_font_montserrat_32, 0);
-        lv_obj_set_style_text_color(icon, coffee_ui_color_primary(), 0);
+        lv_obj_t *icon = lv_image_create(card);
+        lv_image_set_src(icon, icon_for_beverage(beverages[i].id));
+        lv_image_set_scale(icon, 170);
 
         lv_obj_t *label = lv_label_create(card);
         lv_label_set_text(label, beverages[i].display_name);

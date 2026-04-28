@@ -17,15 +17,14 @@ void coffee_screen_show_beverage(coffee_ui_manager_t *ui)
 {
     const coffee_beverage_t *beverage = coffee_app_controller_selected(ui->app);
     lv_obj_t *screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(screen, coffee_ui_color_bg(), 0);
+    coffee_ui_apply_screen_background(screen);
     lv_obj_set_style_pad_all(screen, 30, 0);
 
     lv_obj_t *panel = lv_obj_create(screen);
     lv_obj_set_size(panel, LV_PCT(92), LV_PCT(86));
     lv_obj_center(panel);
     lv_obj_set_style_radius(panel, 8, 0);
-    lv_obj_set_style_bg_color(panel, coffee_ui_color_panel(), 0);
-    lv_obj_set_style_border_width(panel, 0, 0);
+    coffee_ui_apply_glass_panel(panel, LV_OPA_80);
     lv_obj_set_style_pad_all(panel, 28, 0);
     lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(panel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);

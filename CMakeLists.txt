@@ -99,6 +99,7 @@ endif()
 
 add_executable(lvgl_coffee_dispenser
     src/main.c
+    src/ui/assets/beverage_icons.c
     src/ui/ui_manager.c
     src/ui/ui_theme.c
     src/ui/screens/screen_beverage.c
