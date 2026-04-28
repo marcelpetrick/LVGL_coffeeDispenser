@@ -19,6 +19,10 @@ int main(void)
 {
     setenv("DBUS_FATAL_WARNINGS", "0", 1);
     COFFEE_LOGI("starting LVGL Coffee Dispenser HMI %s", COFFEE_APP_VERSION);
+    const char *exit_after_startup_ms_env = getenv("COFFEE_EXIT_AFTER_STARTUP_MS");
+    const uint32_t exit_after_startup_ms =
+        exit_after_startup_ms_env != NULL ? (uint32_t)strtoul(exit_after_startup_ms_env, NULL, 10)
+                                          : 0U;
 
     lv_init();
 
@@ -40,16 +44,23 @@ int main(void)
     coffee_ui_manager_init(&ui, &app);
 
     uint32_t last_tick = SDL_GetTicks();
+    uint32_t runtime_ms = 0;
     while (!coffee_ui_manager_wants_quit(&ui)) {
         SDL_Delay(COFFEE_TICK_MS);
         uint32_t now = SDL_GetTicks();
         uint32_t elapsed = now - last_tick;
         last_tick = now;
+        runtime_ms += elapsed;
 
         lv_tick_inc(elapsed);
         coffee_app_controller_tick(&app, elapsed);
         coffee_ui_manager_tick(&ui, elapsed);
         lv_timer_handler();
+
+        if (exit_after_startup_ms > 0U && runtime_ms >= exit_after_startup_ms) {
+            COFFEE_LOGI("exiting after startup smoke timeout: %u ms", exit_after_startup_ms);
+            break;
+        }
     }
 
     COFFEE_LOGI("shutdown");

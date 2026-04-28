@@ -6,7 +6,7 @@ readonly SCRIPT_NAME="$(basename "$0")"
 readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DEFAULT_PRESET="linux-debug"
 readonly DEFAULT_COVERAGE_BUILD_DIR="${PROJECT_ROOT}/build-coverage"
-readonly COVERAGE_MIN_LINE_PERCENT="65.0"
+readonly COVERAGE_MIN_LINE_PERCENT="80.0"
 
 PRESET="${DEFAULT_PRESET}"
 NO_RUN=0

@@ -17,3 +17,12 @@ if(COFFEE_ENABLE_COVERAGE)
     target_link_options(test_app_controller PRIVATE --coverage)
 endif()
 add_test(NAME app_controller COMMAND test_app_controller)
+
+add_test(
+    NAME app_startup_smoke
+    COMMAND ${CMAKE_COMMAND} -E env
+        SDL_VIDEODRIVER=dummy
+        COFFEE_EXIT_AFTER_STARTUP_MS=100
+        $<TARGET_FILE:lvgl_coffee_dispenser>
+)
+set_tests_properties(app_startup_smoke PROPERTIES TIMEOUT 10)
