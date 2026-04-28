@@ -24,7 +24,8 @@ Stages:
   3. Build
   4. Run CTest
   5. Run clang-format in non-mutating check mode
-  6. Optionally launch the app briefly as a smoke run
+  6. Run Cppcheck static analysis
+  7. Optionally launch the app briefly as a smoke run
 
 Options:
   --preset NAME      CMake preset to use; default: ${DEFAULT_PRESET}
@@ -193,6 +194,31 @@ stage_format() {
     return 1
 }
 
+stage_cppcheck() {
+    if ! command -v cppcheck >/dev/null 2>&1; then
+        record_result "Cppcheck" "FAIL" "cppcheck not found"
+        return 1
+    fi
+
+    local build_dir="${BUILD_DIR}"
+    if [[ -z "${build_dir}" ]]; then
+        build_dir="${PROJECT_ROOT}/build/${PRESET}"
+    fi
+
+    log "Running Cppcheck."
+    local args=(--build-dir "${build_dir}")
+    if [[ "${VERBOSE}" -eq 1 ]]; then
+        args+=(--verbose)
+    fi
+
+    if run_command "${PROJECT_ROOT}/scripts/run_cppcheck.sh" "${args[@]}"; then
+        record_result "Cppcheck" "PASS" "Static analysis report generated"
+        return 0
+    fi
+    record_result "Cppcheck" "FAIL" "Static analysis failed"
+    return 1
+}
+
 stage_smoke_run() {
     if [[ "${NO_RUN}" -eq 1 ]]; then
         record_result "Launch App" "SKIP" "--no-run selected"
@@ -239,6 +265,7 @@ main() {
     require_command git || missing=1
     require_command cmake || missing=1
     require_command clang-format || missing=1
+    require_command cppcheck || missing=1
     require_command timeout || missing=1
     if [[ "${missing}" -ne 0 ]]; then
         record_result "Prerequisites" "FAIL" "Required command missing"
@@ -252,6 +279,7 @@ main() {
     stage_build || failed=1
     stage_tests || failed=1
     stage_format || failed=1
+    stage_cppcheck || failed=1
     stage_smoke_run || failed=1
 
     print_summary

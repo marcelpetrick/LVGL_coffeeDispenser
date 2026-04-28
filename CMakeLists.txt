@@ -9,6 +9,7 @@ project(lvgl_coffee_dispenser
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(COFFEE_BUILD_TESTS "Build unit tests" ON)
 option(COFFEE_ENABLE_DIAGNOSTICS "Enable diagnostics screen" ON)
