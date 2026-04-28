@@ -2,10 +2,10 @@
 #define COFFEE_PLATFORM_LOG_H
 
 typedef enum {
-  COFFEE_LOG_DEBUG,
-  COFFEE_LOG_INFO,
-  COFFEE_LOG_WARN,
-  COFFEE_LOG_ERROR
+    COFFEE_LOG_DEBUG,
+    COFFEE_LOG_INFO,
+    COFFEE_LOG_WARN,
+    COFFEE_LOG_ERROR
 } coffee_log_level_t;
 
 void coffee_log(coffee_log_level_t level, const char *fmt, ...);
