@@ -377,12 +377,13 @@ stage_smoke_run() {
     fi
 
     log "Launching app smoke test for 5 seconds."
-    if SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" timeout 5s "${executable}" >/dev/null 2>&1; then
+    SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" timeout 5s "${executable}" >/dev/null 2>&1
+    local status=$?
+    if [[ "${status}" -eq 0 ]]; then
         record_result "Launch App" "PASS" "Application exited during smoke run"
         return 0
     fi
 
-    local status=$?
     if [[ "${status}" -eq 124 ]]; then
         record_result "Launch App" "PASS" "Application stayed alive for smoke timeout"
         return 0
