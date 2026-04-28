@@ -5,16 +5,19 @@ set -o pipefail
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DEFAULT_PRESET="linux-debug"
+readonly DEFAULT_COVERAGE_BUILD_DIR="${PROJECT_ROOT}/build-coverage"
+readonly COVERAGE_MIN_LINE_PERCENT="65.0"
 
 PRESET="${DEFAULT_PRESET}"
 NO_RUN=0
 VERBOSE=0
 BUILD_DIR=""
+COVERAGE_BUILD_DIR="${DEFAULT_COVERAGE_BUILD_DIR}"
 declare -a RESULTS=()
 
 print_usage() {
     cat <<EOF
-Usage: ${SCRIPT_NAME} [--preset NAME] [--build-dir PATH] [--no-run] [--verbose] [--help]
+Usage: ${SCRIPT_NAME} [--preset NAME] [--build-dir PATH] [--coverage-build-dir PATH] [--no-run] [--verbose] [--help]
 
 Run the local LVGL Coffee Dispenser validation pipeline.
 
@@ -24,13 +27,16 @@ Stages:
   3. Build
   4. Run CTest
   5. Run clang-format in non-mutating check mode
-  6. Generate Doxygen documentation
-  7. Run Cppcheck static analysis
-  8. Optionally launch the app briefly as a smoke run
+  6. Build coverage configuration and generate coverage reports
+  7. Generate Doxygen documentation
+  8. Run Cppcheck static analysis
+  9. Optionally launch the app briefly as a smoke run
 
 Options:
   --preset NAME      CMake preset to use; default: ${DEFAULT_PRESET}
   --build-dir PATH   Override build directory for the smoke-run executable lookup
+  --coverage-build-dir PATH
+                     Override coverage build directory; default: build-coverage
   --no-run           Skip the final application smoke launch
   --verbose          Print command output for all stages
   --help, -h         Show this help
@@ -99,6 +105,14 @@ parse_arguments() {
                     exit 2
                 fi
                 BUILD_DIR="$1"
+                ;;
+            --coverage-build-dir)
+                shift
+                if [[ "$#" -eq 0 ]]; then
+                    error "Missing value for --coverage-build-dir."
+                    exit 2
+                fi
+                COVERAGE_BUILD_DIR="$1"
                 ;;
             --no-run|--noRun)
                 NO_RUN=1
@@ -171,6 +185,93 @@ stage_tests() {
         return 0
     fi
     record_result "Unit Tests" "FAIL" "CTest reported failures"
+    return 1
+}
+
+extract_summary_json_number() {
+    local json_file="$1"
+    local key="$2"
+    python3 - "${json_file}" "${key}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+value = data.get(sys.argv[2])
+if value is None:
+    sys.exit(1)
+print(value)
+PY
+}
+
+number_greater_equal() {
+    python3 - "$1" "$2" <<'PY'
+import sys
+
+actual = float(sys.argv[1])
+minimum = float(sys.argv[2])
+sys.exit(0 if actual >= minimum else 1)
+PY
+}
+
+stage_coverage() {
+    if ! command -v gcov >/dev/null 2>&1; then
+        record_result "Coverage" "FAIL" "gcov not found"
+        return 1
+    fi
+    if ! command -v gcovr >/dev/null 2>&1; then
+        record_result "Coverage" "FAIL" "gcovr not found"
+        return 1
+    fi
+
+    local coverage_dir="${COVERAGE_BUILD_DIR}"
+    if [[ "${coverage_dir}" != /* ]]; then
+        coverage_dir="${PROJECT_ROOT}/${coverage_dir}"
+    fi
+
+    log "Configuring coverage build."
+    if ! run_command cmake -S "${PROJECT_ROOT}" -B "${coverage_dir}" -G Ninja \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCOFFEE_BACKEND=SDL \
+        -DCOFFEE_BUILD_TESTS=ON \
+        -DCOFFEE_ENABLE_COVERAGE=ON; then
+        record_result "Coverage" "FAIL" "Coverage configure failed"
+        return 1
+    fi
+
+    log "Building coverage configuration."
+    if ! run_command cmake --build "${coverage_dir}"; then
+        record_result "Coverage" "FAIL" "Coverage build failed"
+        return 1
+    fi
+
+    log "Generating coverage report."
+    if ! run_command cmake --build "${coverage_dir}" --target coverage-html; then
+        record_result "Coverage" "FAIL" "Coverage report generation failed"
+        return 1
+    fi
+
+    local summary_file="${coverage_dir}/coverage/summary.json"
+    local html_index="${coverage_dir}/coverage/html/index.html"
+    if [[ ! -f "${summary_file}" || ! -f "${html_index}" ]]; then
+        record_result "Coverage" "FAIL" "Coverage output missing"
+        return 1
+    fi
+
+    local line_percent
+    line_percent="$(extract_summary_json_number "${summary_file}" "line_percent")" || {
+        record_result "Coverage" "FAIL" "Could not parse line_percent"
+        return 1
+    }
+
+    if number_greater_equal "${line_percent}" "${COVERAGE_MIN_LINE_PERCENT}"; then
+        record_result "Coverage" "PASS" "Line coverage ${line_percent}%"
+        record_result "Coverage Gate" "PASS" "Threshold ${COVERAGE_MIN_LINE_PERCENT}%"
+        return 0
+    fi
+
+    record_result "Coverage" "PASS" "Line coverage ${line_percent}%"
+    record_result "Coverage Gate" "FAIL" "Threshold ${COVERAGE_MIN_LINE_PERCENT}%"
     return 1
 }
 
@@ -304,6 +405,9 @@ main() {
     require_command clang-format || missing=1
     require_command cppcheck || missing=1
     require_command doxygen || missing=1
+    require_command gcov || missing=1
+    require_command gcovr || missing=1
+    require_command python3 || missing=1
     require_command timeout || missing=1
     if [[ "${missing}" -ne 0 ]]; then
         record_result "Prerequisites" "FAIL" "Required command missing"
@@ -317,6 +421,7 @@ main() {
     stage_build || failed=1
     stage_tests || failed=1
     stage_format || failed=1
+    stage_coverage || failed=1
     stage_doxygen || failed=1
     stage_cppcheck || failed=1
     stage_smoke_run || failed=1

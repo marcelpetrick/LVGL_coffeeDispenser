@@ -12,6 +12,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(COFFEE_BUILD_TESTS "Build unit tests" ON)
+option(COFFEE_ENABLE_COVERAGE "Enable gcov coverage instrumentation" OFF)
 option(COFFEE_ENABLE_DIAGNOSTICS "Enable diagnostics screen" ON)
 option(COFFEE_ENABLE_FILE_LOGGING "Enable file logging" OFF)
 set(COFFEE_BACKEND "SDL" CACHE STRING "Display/input backend: SDL, FBDEV, DRM")
@@ -25,6 +26,14 @@ endif()
 
 if(NOT COFFEE_BACKEND STREQUAL "SDL")
     message(FATAL_ERROR "Only COFFEE_BACKEND=SDL is implemented in this prototype")
+endif()
+
+if(COFFEE_ENABLE_COVERAGE AND NOT COFFEE_BUILD_TESTS)
+    message(FATAL_ERROR "COFFEE_ENABLE_COVERAGE requires COFFEE_BUILD_TESTS=ON")
+endif()
+
+if(COFFEE_ENABLE_COVERAGE AND NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    message(FATAL_ERROR "Coverage is only supported with GCC or Clang compatible coverage flags")
 endif()
 
 find_package(PkgConfig REQUIRED)
@@ -83,6 +92,10 @@ target_compile_definitions(coffee_core
 )
 
 target_compile_options(coffee_core PRIVATE -Wall -Wextra -Wpedantic)
+if(COFFEE_ENABLE_COVERAGE)
+    target_compile_options(coffee_core PRIVATE -O0 -g --coverage)
+    target_link_options(coffee_core PUBLIC --coverage)
+endif()
 
 add_executable(lvgl_coffee_dispenser
     src/main.c
@@ -116,4 +129,44 @@ target_link_libraries(lvgl_coffee_dispenser
 enable_testing()
 if(COFFEE_BUILD_TESTS)
     add_subdirectory(tests)
+endif()
+
+if(COFFEE_ENABLE_COVERAGE)
+    find_program(COFFEE_GCOV_EXECUTABLE gcov REQUIRED)
+    find_program(COFFEE_GCOVR_EXECUTABLE gcovr)
+
+    if(COFFEE_GCOVR_EXECUTABLE)
+        add_custom_target(coverage
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage
+            COMMAND ${COFFEE_GCOVR_EXECUTABLE}
+                --root ${CMAKE_SOURCE_DIR}
+                --filter ${CMAKE_SOURCE_DIR}/src
+                --exclude ${CMAKE_SOURCE_DIR}/external
+                --gcov-executable ${COFFEE_GCOV_EXECUTABLE}
+                --txt ${CMAKE_BINARY_DIR}/coverage/coverage.txt
+                --json-summary ${CMAKE_BINARY_DIR}/coverage/summary.json
+                ${CMAKE_BINARY_DIR}
+            DEPENDS coffee_core
+            USES_TERMINAL
+        )
+
+        add_custom_target(coverage-html
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/coverage/html
+            COMMAND ${COFFEE_GCOVR_EXECUTABLE}
+                --root ${CMAKE_SOURCE_DIR}
+                --filter ${CMAKE_SOURCE_DIR}/src
+                --exclude ${CMAKE_SOURCE_DIR}/external
+                --gcov-executable ${COFFEE_GCOV_EXECUTABLE}
+                --txt ${CMAKE_BINARY_DIR}/coverage/coverage.txt
+                --json-summary ${CMAKE_BINARY_DIR}/coverage/summary.json
+                --html-details ${CMAKE_BINARY_DIR}/coverage/html/index.html
+                ${CMAKE_BINARY_DIR}
+            DEPENDS coffee_core
+            USES_TERMINAL
+        )
+    else()
+        message(STATUS "coverage targets disabled: install gcovr to enable coverage output")
+    endif()
 endif()
