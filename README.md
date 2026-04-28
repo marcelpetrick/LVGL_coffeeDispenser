@@ -16,8 +16,21 @@ Debian/Ubuntu-like systems:
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake ninja-build pkg-config libsdl2-dev git
+sudo apt install -y \
+  build-essential \
+  clang-format \
+  cmake \
+  cppcheck \
+  doxygen \
+  gcovr \
+  graphviz \
+  ninja-build \
+  pkg-config \
+  libsdl2-dev \
+  git
 ```
+
+`cppcheck-htmlreport` is optional but recommended; when present it generates an HTML static-analysis report.
 
 Initialize dependencies after cloning:
 
@@ -53,15 +66,96 @@ Mouse input simulates touch input.
 ctest --preset linux-debug
 ```
 
-## Full Check
+The registered tests include unit tests for the beverage model and controller plus a headless SDL startup smoke test.
 
-Run the full local validation script:
+## Local Pipeline
+
+Run the full local validation pipeline:
 
 ```bash
-./tools/full_check.sh
+./localPipeline.sh --no-run
 ```
 
-It initializes submodules, configures, builds, runs tests, and runs a `clang-format` dry-run when `clang-format` is available.
+The pipeline initializes submodules, configures, builds, runs CTest, checks formatting without editing files, builds coverage, enforces the coverage gate, generates Doxygen docs, runs Cppcheck, and optionally launches the app briefly.
+
+Useful options:
+
+```bash
+./localPipeline.sh --help
+./localPipeline.sh --no-run
+./localPipeline.sh --verbose
+./localPipeline.sh --preset linux-debug
+```
+
+`tools/full_check.sh` is kept as a compatibility wrapper around `localPipeline.sh --no-run`.
+
+## Formatting
+
+The repository uses `.clang-format`. Check formatting:
+
+```bash
+find config src tests -type f \( -name '*.c' -o -name '*.h' \) -print \
+  | xargs clang-format --dry-run --Werror
+```
+
+Apply formatting:
+
+```bash
+find config src tests -type f \( -name '*.c' -o -name '*.h' \) -print \
+  | xargs clang-format -i
+```
+
+## Static Analysis
+
+Cppcheck uses the CMake compilation database:
+
+```bash
+cmake --preset linux-debug
+./scripts/run_cppcheck.sh --build-dir build/linux-debug
+```
+
+Reports:
+
+- `reports/cppcheck/cppcheck.xml`
+- `reports/cppcheck/html/index.html` when `cppcheck-htmlreport` is available
+
+## Documentation
+
+Generate Doxygen HTML documentation:
+
+```bash
+cmake --preset linux-debug
+cmake --build build/linux-debug --target doxygen
+```
+
+Reports:
+
+- `build/linux-debug/doxygen/html/index.html`
+- `build/linux-debug/doxygen/warnings.txt`
+
+The local pipeline treats non-empty Doxygen warnings as a failure.
+
+## Coverage
+
+Coverage is opt-in and uses `gcov`/`gcovr`:
+
+```bash
+cmake -S . -B build-coverage -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCOFFEE_BACKEND=SDL \
+  -DCOFFEE_BUILD_TESTS=ON \
+  -DCOFFEE_ENABLE_COVERAGE=ON
+cmake --build build-coverage
+cmake --build build-coverage --target coverage-html
+```
+
+Reports:
+
+- `build-coverage/coverage/coverage.txt`
+- `build-coverage/coverage/summary.json`
+- `build-coverage/coverage/html/index.html`
+
+The current local pipeline gate requires at least 80% line coverage.
 
 ## Package
 
