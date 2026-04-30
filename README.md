@@ -2,8 +2,11 @@
 
 This repository contains a desktop-first LVGL prototype for a touch-based coffee dispenser HMI. It is a test project and software-engineering exercise: the current implementation runs on Linux with SDL2 and a simulated dispenser backend, while the code is structured so application logic, UI, service abstraction, platform helpers, tests, and tooling stay separated.
 
-Author: mail@marcelpetrick.it  
-License: GPLv3, see `LICENSE`
+**Author: Marcel Petrick <mail@marcelpetrick.it>**
+
+**Note: projected is generated with AI.**
+
+**License: GPLv3 or later. See `LICENSE`.**
 
 ## Project Overview
 
