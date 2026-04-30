@@ -6,6 +6,12 @@
 
 #include <stdint.h>
 
+#define COFFEE_CARD_MIN_WIDTH 160
+#define COFFEE_CARD_MIN_HEIGHT 146
+#define COFFEE_ICON_SLOT_SIZE 88
+#define COFFEE_ICON_SCALE 146
+#define COFFEE_LABEL_MIN_HEIGHT 38
+
 static void select_cb(lv_event_t *e)
 {
     coffee_ui_manager_t *ui = lv_event_get_user_data(e);
@@ -120,6 +126,9 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
     lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(grid, 0, 0);
     lv_obj_set_style_pad_all(grid, 0, 0);
+    lv_obj_set_style_pad_row(grid, 12, 0);
+    lv_obj_set_style_pad_column(grid, 12, 0);
+    lv_obj_set_style_min_height(grid, (COFFEE_CARD_MIN_HEIGHT * 2) + 12, 0);
     lv_obj_set_layout(grid, LV_LAYOUT_GRID);
     static int32_t cols[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static int32_t rows[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
@@ -133,7 +142,10 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
         lv_obj_add_event_cb(card, select_cb, LV_EVENT_CLICKED, ui);
         lv_obj_set_grid_cell(card, LV_GRID_ALIGN_STRETCH, (int32_t)(i % 3), 1,
                              LV_GRID_ALIGN_STRETCH, (int32_t)(i / 3), 1);
+        lv_obj_set_style_min_width(card, COFFEE_CARD_MIN_WIDTH, 0);
+        lv_obj_set_style_min_height(card, COFFEE_CARD_MIN_HEIGHT, 0);
         lv_obj_set_style_radius(card, 8, 0);
+        lv_obj_set_style_pad_all(card, 8, 0);
         coffee_ui_apply_glass_panel(card, LV_OPA_70);
         lv_obj_set_style_bg_color(card,
                                   beverages[i].id == COFFEE_BEV_HOT_WATER ? lv_color_hex(0x2c6f8f)
@@ -145,15 +157,25 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
                                            : lv_color_hex(0x2d3540),
                                        0);
         lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
-        lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+        lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
                               LV_FLEX_ALIGN_CENTER);
 
-        lv_obj_t *icon = lv_image_create(card);
+        lv_obj_t *icon_slot = lv_obj_create(card);
+        lv_obj_remove_style_all(icon_slot);
+        lv_obj_set_size(icon_slot, COFFEE_ICON_SLOT_SIZE, COFFEE_ICON_SLOT_SIZE);
+        lv_obj_set_style_min_width(icon_slot, COFFEE_ICON_SLOT_SIZE, 0);
+        lv_obj_set_style_min_height(icon_slot, COFFEE_ICON_SLOT_SIZE, 0);
+
+        lv_obj_t *icon = lv_image_create(icon_slot);
         lv_image_set_src(icon, icon_for_beverage(beverages[i].id));
-        lv_image_set_scale(icon, 170);
+        lv_image_set_scale(icon, COFFEE_ICON_SCALE);
+        lv_obj_center(icon);
 
         lv_obj_t *label = lv_label_create(card);
+        lv_obj_set_width(label, LV_PCT(100));
+        lv_obj_set_style_min_height(label, COFFEE_LABEL_MIN_HEIGHT, 0);
         lv_label_set_text(label, beverages[i].display_name);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
         lv_obj_set_style_text_color(label, coffee_ui_color_text(), 0);
         lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     }
