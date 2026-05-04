@@ -8,8 +8,8 @@
 
 #define COFFEE_CARD_MIN_WIDTH 160
 #define COFFEE_CARD_MIN_HEIGHT 146
-#define COFFEE_ICON_SLOT_SIZE 88
-#define COFFEE_ICON_SCALE 146
+#define COFFEE_ICON_SLOT_SIZE 72
+#define COFFEE_ICON_SCALE 136
 #define COFFEE_LABEL_MIN_HEIGHT 38
 
 static void select_cb(lv_event_t *e)
@@ -157,8 +157,9 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
                                            : lv_color_hex(0x2d3540),
                                        0);
         lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
-        lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
+        lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
                               LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_row(card, 8, 0);
 
         lv_obj_t *icon_slot = lv_obj_create(card);
         lv_obj_remove_style_all(icon_slot);
