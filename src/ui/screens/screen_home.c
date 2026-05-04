@@ -80,7 +80,7 @@ void coffee_screen_show_splash(coffee_ui_manager_t *ui)
     lv_obj_set_style_bg_opa(halo, LV_OPA_20, 0);
 
     lv_obj_t *title = lv_label_create(screen);
-    lv_label_set_text(title, "Coffee Dispenser");
+    lv_label_set_text(title, "LVGL Coffee Dispenser " COFFEE_APP_VERSION);
     lv_obj_set_style_text_color(title, coffee_ui_color_text(), 0);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_32, 0);
     lv_obj_align(title, LV_ALIGN_CENTER, 0, -28);

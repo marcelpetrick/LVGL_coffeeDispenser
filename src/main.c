@@ -27,7 +27,7 @@ int main(void)
     lv_init();
 
     lv_display_t *display = lv_sdl_window_create(COFFEE_DEFAULT_WIDTH, COFFEE_DEFAULT_HEIGHT);
-    lv_sdl_window_set_title(display, "LVGL Coffee Dispenser");
+    lv_sdl_window_set_title(display, "LVGL Coffee Dispenser - " COFFEE_APP_VERSION);
     lv_sdl_window_set_resizeable(display, true);
     lv_sdl_mouse_create();
     lv_sdl_mousewheel_create();
