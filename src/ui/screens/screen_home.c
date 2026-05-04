@@ -36,7 +36,8 @@ static void diagnostics_cb(lv_event_t *e)
 static lv_obj_t *make_button(lv_obj_t *parent, const char *text, lv_event_cb_t cb, void *user_data)
 {
     lv_obj_t *btn = lv_button_create(parent);
-    lv_obj_set_size(btn, LV_PCT(100), 54);
+    lv_obj_set_size(btn, LV_SIZE_CONTENT, 54);
+    lv_obj_set_style_pad_hor(btn, 28, 0);
     lv_obj_add_event_cb(btn, cb, LV_EVENT_CLICKED, user_data);
     lv_obj_t *label = lv_label_create(btn);
     lv_label_set_text(label, text);
@@ -188,6 +189,7 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
     lv_obj_set_style_border_width(nav, 0, 0);
     lv_obj_set_flex_flow(nav, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(nav, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_column(nav, 10, 0);
     make_button(nav, "Settings", settings_cb, ui);
 #if COFFEE_ENABLE_DIAGNOSTICS
     make_button(nav, "Diagnostics", diagnostics_cb, ui);
