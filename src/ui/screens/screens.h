@@ -18,5 +18,6 @@ void coffee_screen_show_completion(coffee_ui_manager_t *ui, bool cancelled);
 void coffee_screen_show_error(coffee_ui_manager_t *ui);
 void coffee_screen_show_settings(coffee_ui_manager_t *ui);
 void coffee_screen_show_diagnostics(coffee_ui_manager_t *ui);
+void coffee_screen_show_showcase(coffee_ui_manager_t *ui);
 
 #endif

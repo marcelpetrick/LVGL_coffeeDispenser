@@ -107,6 +107,7 @@ add_executable(lvgl_coffee_dispenser
     src/ui/screens/screen_dispense.c
     src/ui/screens/screen_error.c
     src/ui/screens/screen_home.c
+    src/ui/screens/screen_showcase.c
     src/ui/screens/screen_settings.c
 )
 

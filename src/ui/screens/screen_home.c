@@ -33,6 +33,11 @@ static void diagnostics_cb(lv_event_t *e)
     coffee_screen_show_diagnostics(lv_event_get_user_data(e));
 }
 
+static void showcase_cb(lv_event_t *e)
+{
+    coffee_screen_show_showcase(lv_event_get_user_data(e));
+}
+
 static lv_obj_t *make_button(lv_obj_t *parent, const char *text, lv_event_cb_t cb, void *user_data)
 {
     lv_obj_t *btn = lv_button_create(parent);
@@ -190,6 +195,7 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
     lv_obj_set_flex_flow(nav, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(nav, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_column(nav, 10, 0);
+    make_button(nav, "UI Showcase", showcase_cb, ui);
     make_button(nav, "Settings", settings_cb, ui);
 #if COFFEE_ENABLE_DIAGNOSTICS
     make_button(nav, "Diagnostics", diagnostics_cb, ui);
