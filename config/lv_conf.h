@@ -35,6 +35,8 @@
 #define LV_USE_SLIDER 1
 #define LV_USE_SWITCH 1
 #define LV_USE_TABVIEW 1
+#define LV_USE_TEXTAREA 1
+#define LV_USE_KEYBOARD 1
 
 #define LV_MEM_SIZE (256U * 1024U)
 

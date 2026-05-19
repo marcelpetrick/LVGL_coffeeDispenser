@@ -230,15 +230,15 @@ static void add_input_widgets(lv_obj_t *parent)
 #endif
 
 #if LV_USE_TEXTAREA
-    lv_obj_t *text_card = create_card(row, "lv_textarea");
-    lv_obj_set_height(text_card, 176);
+    lv_obj_t *text_card = create_card(row, "lv_textarea + lv_keyboard");
+    lv_obj_set_size(text_card, 456, 250);
     lv_obj_t *textarea = lv_textarea_create(text_card);
-    lv_obj_set_width(textarea, LV_PCT(92));
+    lv_obj_set_width(textarea, LV_PCT(96));
     lv_textarea_set_one_line(textarea, true);
-    lv_textarea_set_placeholder_text(textarea, "Input");
+    lv_textarea_set_placeholder_text(textarea, "Enter label text");
 #if LV_USE_KEYBOARD
     lv_obj_t *keyboard = lv_keyboard_create(text_card);
-    lv_obj_set_size(keyboard, LV_PCT(92), 82);
+    lv_obj_set_size(keyboard, LV_PCT(96), 154);
     lv_keyboard_set_textarea(keyboard, textarea);
 #endif
 #endif
