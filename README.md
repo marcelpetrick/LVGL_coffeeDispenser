@@ -25,6 +25,9 @@ The default target is a Linux x86_64 desktop simulator with an 800 x 480 SDL win
 
 ![](media/currentState.png)
 
+### View to showcase available LVGL elements for a quick preview & test
+![](media/currentState_ui_elements_view.png)
+
 ## Dependencies
 
 On Debian/Ubuntu-like systems:
