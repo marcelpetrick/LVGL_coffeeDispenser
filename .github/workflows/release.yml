@@ -140,9 +140,22 @@ jobs:
           COFFEE_VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "LVGL Coffee Dispenser ${GITHUB_REF_NAME}" \
-            --notes-file release-notes.md \
-            --verify-tag \
-            "lvgl-coffee-dispenser-${COFFEE_VERSION}-linux-x86_64.tar.gz" \
-            "lvgl-coffee-dispenser-${COFFEE_VERSION}-doxygen-html.tar.gz"
+          linux_archive="lvgl-coffee-dispenser-${COFFEE_VERSION}-linux-x86_64.tar.gz"
+          docs_archive="lvgl-coffee-dispenser-${COFFEE_VERSION}-doxygen-html.tar.gz"
+
+          # A tag can be pushed again, for example after a history fix, and then
+          # the release for it already exists. Update it instead of failing.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "release ${GITHUB_REF_NAME} exists, updating it"
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "LVGL Coffee Dispenser ${GITHUB_REF_NAME}" \
+              --notes-file release-notes.md
+            gh release upload "${GITHUB_REF_NAME}" \
+              "${linux_archive}" "${docs_archive}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "LVGL Coffee Dispenser ${GITHUB_REF_NAME}" \
+              --notes-file release-notes.md \
+              --verify-tag \
+              "${linux_archive}" "${docs_archive}"
+          fi
