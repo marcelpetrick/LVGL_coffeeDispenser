@@ -95,11 +95,11 @@ coffee_perf_summary_t coffee_perf_stats_summary(coffee_perf_stats_t *stats)
             summary.median_us = stats->samples[middle];
         }
 
-        uint32_t index = (uint32_t)(((uint64_t)stats->stored * 95U) / 100U);
-        if (index >= stats->stored) {
-            index = stats->stored - 1U;
-        }
-        summary.p95_us = stats->samples[index];
+        /* Nearest-rank percentile: the smallest value that at least 95% of the
+         * samples stay below. The rank is at least 1, so the index stays in
+         * range without an extra guard. */
+        const uint32_t rank = (uint32_t)((((uint64_t)stats->stored * 95U) + 99U) / 100U);
+        summary.p95_us = stats->samples[rank - 1U];
     }
 
     return summary;

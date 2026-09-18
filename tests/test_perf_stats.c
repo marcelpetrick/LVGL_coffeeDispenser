@@ -66,7 +66,7 @@ static void test_percentile_position(void)
     const coffee_perf_summary_t summary = coffee_perf_stats_summary(&stats);
     assert(summary.count == 100U);
     assert(summary.median_us == 50U);
-    assert(summary.p95_us == 96U);
+    assert(summary.p95_us == 95U);
     assert(summary.max_us == 100U);
 }
 
