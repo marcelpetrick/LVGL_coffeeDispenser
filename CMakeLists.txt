@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(lvgl_coffee_dispenser
-    VERSION 0.4.4
+    VERSION 0.5.0
     DESCRIPTION "LVGL Coffee Dispenser HMI prototype"
     LANGUAGES C CXX
 )
@@ -139,6 +139,18 @@ if(COFFEE_ENABLE_COVERAGE)
     find_program(COFFEE_GCOV_EXECUTABLE gcov REQUIRED)
     find_program(COFFEE_GCOVR_EXECUTABLE gcovr)
 
+    # Everything CTest runs has to exist before the report is generated: a test
+    # that is merely registered but not built counts as "Not Run" and its code
+    # silently drops out of the coverage figure.
+    set(COFFEE_COVERAGE_DEPENDENCIES
+        coffee_core
+        lvgl_coffee_dispenser
+        test_app_controller
+        test_beverage_model
+        test_perf_stats
+        test_sim_dispenser_service
+    )
+
     if(COFFEE_GCOVR_EXECUTABLE)
         add_custom_target(coverage
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
@@ -151,7 +163,7 @@ if(COFFEE_ENABLE_COVERAGE)
                 --txt ${CMAKE_BINARY_DIR}/coverage/coverage.txt
                 --json-summary ${CMAKE_BINARY_DIR}/coverage/summary.json
                 ${CMAKE_BINARY_DIR}
-            DEPENDS coffee_core
+            DEPENDS ${COFFEE_COVERAGE_DEPENDENCIES}
             USES_TERMINAL
         )
 
@@ -167,7 +179,7 @@ if(COFFEE_ENABLE_COVERAGE)
                 --json-summary ${CMAKE_BINARY_DIR}/coverage/summary.json
                 --html-details ${CMAKE_BINARY_DIR}/coverage/html/index.html
                 ${CMAKE_BINARY_DIR}
-            DEPENDS coffee_core
+            DEPENDS ${COFFEE_COVERAGE_DEPENDENCIES}
             USES_TERMINAL
         )
     else()

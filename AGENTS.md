@@ -62,7 +62,7 @@ Full local validation (this is the canonical pre-commit gate, not just `ctest`):
 ./localPipeline.sh --verbose        # surface command output for every stage
 ```
 
-The pipeline runs: submodule init → version gate → configure → build → ctest → `clang-format --dry-run --Werror` → coverage build + report → Doxygen → Cppcheck → optional smoke launch. **It enforces an 80% line-coverage gate** (`COVERAGE_MIN_LINE_PERCENT` in `localPipeline.sh`) — dropping below the threshold fails the pipeline. `tools/full_check.sh` runs the same pipeline with `--no-run` forced.
+The pipeline runs: submodule init → version gate → configure → build → ctest → `clang-format --dry-run --Werror` → coverage build + report → Doxygen → Cppcheck → optional smoke launch. **It enforces a 95% line-coverage gate** (`COVERAGE_MIN_LINE_PERCENT` in `localPipeline.sh`) — dropping below the threshold fails the pipeline. `tools/full_check.sh` runs the same pipeline with `--no-run` forced.
 
 Every tool the pipeline touches is a hard requirement; a missing one aborts before the first stage: `git`, `cmake`, `clang-format`, `cppcheck`, `doxygen`, `gcov`, `gcovr`, `python3`, `timeout`.
 

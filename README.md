@@ -7,9 +7,9 @@
 [![SDL 2](https://img.shields.io/badge/SDL-2-1d4e89.svg)](https://www.libsdl.org/)
 [![CMake 3.30+](https://img.shields.io/badge/CMake-3.30%2B-064f8c.svg)](https://cmake.org/)
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
-[![Coverage 82.9%](https://img.shields.io/badge/coverage-82.9%25-brightgreen.svg)](#quality-gate)
+[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#quality-gate)
 [![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#quick-start)
-[![SemVer](https://img.shields.io/badge/semver-0.4.1-orange.svg)](#versioning)
+[![SemVer](https://img.shields.io/badge/semver-0.5.0-orange.svg)](#versioning)
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 
@@ -60,7 +60,7 @@ SDL_VIDEODRIVER=dummy timeout 5s ./build/linux-debug/lvgl_coffee_dispenser
 
 ## Quality Gate
 
-`localPipeline.sh` is the canonical gate; CI runs exactly the same script. It performs submodule init, the semantic-version check, configure, build, CTest, a non-mutating `clang-format` check, the coverage build with an **80% line-coverage threshold**, Doxygen with an empty-warning-log requirement, Cppcheck, and an optional smoke launch.
+`localPipeline.sh` is the canonical gate; CI runs exactly the same script. It performs submodule init, the semantic-version check, configure, build, CTest, a non-mutating `clang-format` check, the coverage build with a **95% line-coverage threshold**, Doxygen with an empty-warning-log requirement, Cppcheck, and an optional smoke launch.
 
 ```bash
 ./localPipeline.sh --no-run          # skip the final smoke launch
@@ -91,7 +91,7 @@ Generated output:
 | Doxygen | `build/linux-debug/doxygen/html/index.html`, `warnings.txt` |
 | Cppcheck | `reports/cppcheck/cppcheck.xml`, `reports/cppcheck/html/index.html` |
 
-The last local run reported 82.9% line, 88.2% function, and 66.9% branch coverage.
+The last local run reported 100% line, 100% function, and 93.0% branch coverage of `coffee_core`.
 
 ## Rendering Benchmark
 
