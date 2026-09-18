@@ -3,8 +3,15 @@
 
 #include <stdint.h>
 
-/** Number of samples kept for the percentile calculation. */
-#define COFFEE_PERF_MAX_SAMPLES 8192U
+/**
+ * Number of samples kept for the percentile calculation.
+ *
+ * The buffer is part of the collector and therefore resident, so the size is a
+ * compromise: 2048 samples are 8 KiB per stage and cover more than a minute at
+ * the LVGL refresh rate. Everything beyond that still counts towards the mean,
+ * the extremes, and the frame count.
+ */
+#define COFFEE_PERF_MAX_SAMPLES 2048U
 
 /**
  * Collector for microsecond timings.

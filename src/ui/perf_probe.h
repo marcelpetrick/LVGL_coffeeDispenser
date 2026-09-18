@@ -22,6 +22,7 @@
 typedef struct {
     bool enabled;
     bool force_redraw;
+    lv_display_t *display;
     uint32_t render_start_us;
     uint32_t flush_start_us;
     coffee_perf_stats_t render;

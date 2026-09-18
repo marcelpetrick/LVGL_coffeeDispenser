@@ -28,13 +28,28 @@ static bool label_matches(lv_obj_t *obj, const char *caption)
     return text != NULL && strcmp(text, caption) == 0;
 }
 
+static lv_obj_t *clickable_ancestor(lv_obj_t *obj)
+{
+    /* The caption may sit several levels below the control it belongs to, so
+     * the search walks up until it finds something that takes clicks. */
+    for (lv_obj_t *candidate = obj; candidate != NULL; candidate = lv_obj_get_parent(candidate)) {
+        if (lv_obj_has_flag(candidate, LV_OBJ_FLAG_CLICKABLE)) {
+            return candidate;
+        }
+    }
+    return NULL;
+}
+
 static lv_obj_t *find_clickable(lv_obj_t *parent, const char *caption)
 {
     const uint32_t child_count = lv_obj_get_child_count(parent);
     for (uint32_t i = 0U; i < child_count; ++i) {
         lv_obj_t *child = lv_obj_get_child(parent, i);
-        if (label_matches(child, caption) && lv_obj_has_flag(parent, LV_OBJ_FLAG_CLICKABLE)) {
-            return parent;
+        if (label_matches(child, caption)) {
+            lv_obj_t *target = clickable_ancestor(child);
+            if (target != NULL) {
+                return target;
+            }
         }
 
         lv_obj_t *found = find_clickable(child, caption);
