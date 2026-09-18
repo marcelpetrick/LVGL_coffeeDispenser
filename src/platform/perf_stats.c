@@ -1,5 +1,6 @@
 #include "platform/perf_stats.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static int compare_samples(const void *lhs, const void *rhs)
@@ -17,17 +18,9 @@ static int compare_samples(const void *lhs, const void *rhs)
 
 static void sort_samples(uint32_t *samples, uint32_t count)
 {
-    /* Insertion sort keeps this dependency-free and is fast enough: it runs
-     * once per report, on data that is already almost sorted in practice. */
-    for (uint32_t i = 1U; i < count; ++i) {
-        const uint32_t value = samples[i];
-        uint32_t j = i;
-        while (j > 0U && compare_samples(&samples[j - 1U], &value) > 0) {
-            samples[j] = samples[j - 1U];
-            --j;
-        }
-        samples[j] = value;
-    }
+    /* Frame timings arrive in no particular order, so an insertion sort would
+     * be quadratic over the full sample buffer. */
+    qsort(samples, count, sizeof(samples[0]), compare_samples);
 }
 
 void coffee_perf_stats_reset(coffee_perf_stats_t *stats)
