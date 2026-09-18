@@ -8,6 +8,10 @@ OUTPUT_LANGUAGE        = English
 USE_MDFILE_AS_MAINPAGE = "@CMAKE_SOURCE_DIR@/README.md"
 
 INPUT                  = "@CMAKE_SOURCE_DIR@/README.md" \
+                         "@CMAKE_SOURCE_DIR@/AGENTS.md" \
+                         "@CMAKE_SOURCE_DIR@/SWE_PLAN.md" \
+                         @COFFEE_DOXYGEN_EXTRA_INPUT@ \
+                         "@CMAKE_SOURCE_DIR@/documents" \
                          "@CMAKE_SOURCE_DIR@/docs" \
                          "@CMAKE_SOURCE_DIR@/config" \
                          "@CMAKE_SOURCE_DIR@/src"

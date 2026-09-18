@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(lvgl_coffee_dispenser
-    VERSION 0.7.0
+    VERSION 0.7.1
     DESCRIPTION "LVGL Coffee Dispenser HMI prototype"
     LANGUAGES C CXX
 )
@@ -43,6 +43,15 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set(COFFEE_DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/doxygen")
     set(COFFEE_DOXYGEN_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+
+    # The benchmark report carries the version in its name, so it is globbed
+    # instead of being listed: an unlisted file that README links to would be
+    # an unresolved reference and the pipeline fails on a non-empty warning log.
+    file(GLOB COFFEE_BENCHMARK_REPORTS "${CMAKE_SOURCE_DIR}/LVGL_*_benchmark.md")
+    set(COFFEE_DOXYGEN_EXTRA_INPUT "")
+    foreach(report IN LISTS COFFEE_BENCHMARK_REPORTS)
+        string(APPEND COFFEE_DOXYGEN_EXTRA_INPUT "\"${report}\" ")
+    endforeach()
 
     configure_file(
         "${CMAKE_SOURCE_DIR}/Doxyfile.in"

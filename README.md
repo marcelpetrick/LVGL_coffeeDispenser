@@ -7,9 +7,9 @@
 [![SDL 2](https://img.shields.io/badge/SDL-2-1d4e89.svg)](https://www.libsdl.org/)
 [![CMake 3.30+](https://img.shields.io/badge/CMake-3.30%2B-064f8c.svg)](https://cmake.org/)
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
-[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#quality-gate)
-[![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#quick-start)
-[![SemVer](https://img.shields.io/badge/versioning-semver-orange.svg)](#versioning)
+[![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/README.md#quality-gate)
+[![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/README.md#quick-start)
+[![SemVer](https://img.shields.io/badge/versioning-semver-orange.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/README.md#versioning)
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 

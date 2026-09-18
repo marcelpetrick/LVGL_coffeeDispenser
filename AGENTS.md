@@ -7,7 +7,7 @@ This file provides guidance to coding agents (Claude Code, Codex, and friends) w
 Good software craftsmanship is the point of this repository, so the process is part of the deliverable:
 
 - **Atomic commits.** One concern per commit, with a [Conventional Commits](https://www.conventionalcommits.org/) subject (`feat`, `fix`, `docs`, `test`, `ci`, `chore`, `refactor`) and a body that says *why*. A fix and the test that pins it belong together; unrelated cleanups do not.
-- **Bump the version in the same commit.** See [Versioning](#versioning); the pipeline rejects a commit that does not.
+- **Bump the version in the same commit.** See the Versioning section below; the pipeline rejects a commit that does not.
 - **Run the gate before committing:** `./localPipeline.sh --no-run`. Every stage has to pass, not just the tests.
 - **Cover what you add.** The line-coverage gate is 95%, the suite is at 100% of `coffee_core`; keep it there. Logic worth testing belongs in `coffee_core`, not in the LVGL layer, so it stays testable without a display.
 - **Fix the cause, not the symptom.** When a gate fails or a line stays uncovered, check whether the code is wrong before adjusting the test: the uncovered clamp in `sim_tick` and the unreachable p95 guard were both real defects.
