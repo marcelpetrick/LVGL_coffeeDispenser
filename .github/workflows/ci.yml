@@ -3,7 +3,7 @@
 #
 # Runs exactly the verification that is run locally: ./localPipeline.sh performs
 # the submodule init, the semantic-version gate, configure+build, CTest, the
-# clang-format check, the coverage build with its 80% line-coverage gate, the
+# clang-format check, the coverage build with its 95% line-coverage gate, the
 # Doxygen build with its empty-warning-log gate, and Cppcheck. --no-run skips
 # only the final interactive app launch, which is what that option exists for.
 #

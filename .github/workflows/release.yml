@@ -129,7 +129,7 @@ jobs:
             printf '\n## Downloads\n\n'
             printf '* **Linux (x86-64):** `lvgl-coffee-dispenser-%s-linux-x86_64.tar.gz` - unpack it and run `./run.sh`. SDL2 has to be installed on the system.\n' "${COFFEE_VERSION}"
             printf '* **API documentation:** `lvgl-coffee-dispenser-%s-doxygen-html.tar.gz`\n\n' "${COFFEE_VERSION}"
-            printf 'This build passed the full project pipeline: semantic-version gate, unit tests, the 80%% line-coverage gate, an empty Doxygen warning log, Cppcheck and clang-format. The packaged binary was started once headlessly before publishing.\n'
+            printf 'This build passed the full project pipeline: semantic-version gate, unit tests, the 95%% line-coverage gate, an empty Doxygen warning log, Cppcheck and clang-format. The packaged binary was started once headlessly before publishing.\n'
           } > release-notes.md
           cat release-notes.md
 
