@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LVGL Coffee Dispenser &mdash; Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+  :root {
+    --ink: #1c1a17;
+    --ink-2: #4a453e;
+    --ink-3: #787065;
+    --ground: #fbfaf7;
+    --panel: #ffffff;
+    --rule: #e4dfd6;
+    --rule-strong: #cfc8bb;
+    --accent: #b0601e;
+    --accent-2: #00846b;
+    --shadow: 0 1px 2px rgba(28, 26, 23, .06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #f2ede4;
+      --ink-2: #c3bbae;
+      --ink-3: #928a7e;
+      --ground: #171614;
+      --panel: #201e1b;
+      --rule: #34302b;
+      --rule-strong: #4a443c;
+      --accent: #c9833a;
+      --accent-2: #31a188;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    line-height: 1.55;
+    padding-inline: 16px;
+    padding-block: 0 56px;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; }
+
+  header {
+    border-bottom: 1px solid var(--rule-strong);
+    padding-block: 44px 24px;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 12px;
+  }
+
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.1;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+
+  p { color: var(--ink-2); max-width: 66ch; margin: 0 0 14px; }
+
+  h2 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 20px;
+    margin: 36px 0 10px;
+  }
+
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+
+  li a.card {
+    display: block;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+  }
+
+  li a.card:hover, li a.card:focus-visible { border-color: var(--rule-strong); border-left-color: var(--accent-2); }
+
+  .card .name { font-weight: 600; display: block; margin-bottom: 3px; }
+  .card .what { color: var(--ink-2); font-size: 14px; }
+
+  .meta {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    margin-top: 32px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .meta a { color: var(--accent-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">LVGL Coffee Dispenser HMI</p>
+    <h1>Documentation</h1>
+    <p>A desktop-first LVGL prototype of a touch coffee-dispenser HMI: LVGL 9.6 and SDL2 on Linux, with the controller and beverage model kept display-independent and unit-tested. These are the pages published from the repository&rsquo;s <code>docs/</code> folder.</p>
+  </header>
+
+  <h2>Measurements</h2>
+  <ul>
+    <li>
+      <a class="card" href="./benchmark-lvgl-9.3-vs-9.6.html">
+        <span class="name">Did LVGL 9.6 get faster?</span>
+        <span class="what">Eight paired runs of LVGL 9.3.0 against 9.6.0 on the same 800&times;480 HMI: render time, frame budget, memory, and what the measurement does not cover.</span>
+      </a>
+    </li>
+  </ul>
+
+  <h2>Engineering notes</h2>
+  <ul>
+    <li>
+      <a class="card" href="https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/docs/architecture.md">
+        <span class="name">Architecture</span>
+        <span class="what">Layering rules: the UI requests state changes through the controller, and only the controller talks to the dispenser service.</span>
+      </a>
+    </li>
+    <li>
+      <a class="card" href="https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/docs/ui-flow.md">
+        <span class="name">UI flow</span>
+        <span class="what">The screens and the transitions between them.</span>
+      </a>
+    </li>
+    <li>
+      <a class="card" href="https://github.com/marcelpetrick/LVGL_coffeeDispenser/blob/master/docs/build-and-deploy.md">
+        <span class="name">Build and deploy</span>
+        <span class="what">Build paths, the quality gate, generated report locations, packaging, and the measurement scripts.</span>
+      </a>
+    </li>
+  </ul>
+
+  <p class="meta">
+    Source: <a href="https://github.com/marcelpetrick/LVGL_coffeeDispenser">github.com/marcelpetrick/LVGL_coffeeDispenser</a>
+    &middot; GPLv3 or later &middot; Author: Marcel Petrick
+  </p>
+</div>
+</body>
+</html>
