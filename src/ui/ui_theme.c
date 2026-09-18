@@ -1,5 +1,7 @@
 #include "ui/ui_theme.h"
 
+#include "app_config.h"
+
 void coffee_ui_theme_apply(void)
 {
     lv_display_t *display = lv_display_get_default();
@@ -79,4 +81,13 @@ lv_color_t coffee_ui_color_warning(void)
 lv_color_t coffee_ui_color_text(void)
 {
     return lv_color_hex(0xf5f0e8);
+}
+
+void coffee_ui_load_screen(lv_obj_t *screen)
+{
+    if (screen == NULL || screen == lv_screen_active()) {
+        return;
+    }
+
+    lv_screen_load_anim(screen, LV_SCR_LOAD_ANIM_FADE_IN, COFFEE_SCREEN_TRANSITION_MS, 0, true);
 }

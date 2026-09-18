@@ -47,5 +47,5 @@ void coffee_screen_show_settings(coffee_ui_manager_t *ui)
     lv_label_set_text(home_label, "Home");
     lv_obj_center(home_label);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }

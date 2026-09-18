@@ -516,5 +516,5 @@ void coffee_screen_show_showcase(coffee_ui_manager_t *ui)
     add_styling_examples(content);
     add_advanced_widgets(content);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }

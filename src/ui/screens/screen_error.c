@@ -33,5 +33,5 @@ void coffee_screen_show_error(coffee_ui_manager_t *ui)
     lv_label_set_text(label, "Back to home");
     lv_obj_center(label);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }

@@ -95,7 +95,7 @@ void coffee_screen_show_splash(coffee_ui_manager_t *ui)
     lv_label_set_text(sub, "LVGL desktop prototype");
     lv_obj_set_style_text_color(sub, lv_color_hex(0xb6c0ca), 0);
     lv_obj_align(sub, LV_ALIGN_CENTER, 0, 20);
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }
 
 void coffee_screen_show_home(coffee_ui_manager_t *ui)
@@ -201,5 +201,5 @@ void coffee_screen_show_home(coffee_ui_manager_t *ui)
     make_button(nav, "Diagnostics", diagnostics_cb, ui);
 #endif
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }

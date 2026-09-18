@@ -41,7 +41,7 @@ void coffee_screen_show_dispense(coffee_ui_manager_t *ui)
     lv_label_set_text(stop_label, "Stop");
     lv_obj_center(stop_label);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
     coffee_screen_update_dispense(ui);
 }
 
@@ -91,5 +91,5 @@ void coffee_screen_show_completion(coffee_ui_manager_t *ui, bool cancelled)
     lv_label_set_text(label, "Home");
     lv_obj_center(label);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }

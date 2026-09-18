@@ -153,7 +153,7 @@ The SDL integration is isolated from the core: the UI only requests state change
 src/main.c        SDL bring-up, lv_init, tick loop
 src/app/          beverage model + controller state machine (hardware-independent)
 src/service/      dispenser service vtable + simulated implementation
-src/ui/           ui_manager, theme, assets, screens
+src/ui/           ui_manager, theme (incl. screen transition), assets, screens
 src/platform/     logging and time wrappers
 config/           app_config.h + lv_conf.h
 ```

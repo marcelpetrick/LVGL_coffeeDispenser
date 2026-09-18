@@ -73,5 +73,5 @@ void coffee_screen_show_beverage(coffee_ui_manager_t *ui)
     lv_label_set_text(confirm_label, "Start");
     lv_obj_center(confirm_label);
 
-    lv_screen_load(screen);
+    coffee_ui_load_screen(screen);
 }
