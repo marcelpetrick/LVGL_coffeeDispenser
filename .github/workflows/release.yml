@@ -1,0 +1,148 @@
+# -----------------------------------------------------------------------------
+# LVGL Coffee Dispenser release
+#
+# Triggered by pushing a version tag that matches the project version, e.g.:
+#
+#     git tag v0.3.0 && git push origin v0.3.0
+#
+# Nothing is published unverified: the tag has to agree with the version in
+# CMakeLists.txt, the full local pipeline has to pass, and the packaged binary
+# is started once headlessly before the release is created.
+#
+# Artifacts:
+#   * lvgl-coffee-dispenser-<version>-linux-x86_64.tar.gz - unpack, ./run.sh
+#   * lvgl-coffee-dispenser-<version>-doxygen-html.tar.gz - generated API docs
+# -----------------------------------------------------------------------------
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COFFEE_EXPECTED_GCOVR_VERSION: "8.6"
+  SDL_VIDEODRIVER: dummy
+
+jobs:
+  release:
+    name: Verify, package and publish
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Check that the tag matches the project version
+        id: version
+        run: |
+          set -euo pipefail
+          project_version="$(sed -n 's/^[[:space:]]*VERSION[[:space:]]\+\([0-9]\+\.[0-9]\+\.[0-9]\+\)[[:space:]]*$/\1/p' CMakeLists.txt | head -1)"
+          if [ -z "${project_version}" ]; then
+            echo "::error::CMakeLists.txt declares no MAJOR.MINOR.PATCH version."
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tag_version="${GITHUB_REF_NAME#v}"
+            echo "tag: ${tag_version}, CMakeLists.txt: ${project_version}"
+            if [ "${tag_version}" != "${project_version}" ]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} does not match the project version ${project_version}."
+              exit 1
+            fi
+          fi
+          echo "version=${project_version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install build and quality tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            build-essential ninja-build pkg-config libsdl2-dev \
+            clang-format cppcheck doxygen graphviz python3-pygments
+
+      - name: Install the pinned gcovr
+        run: |
+          pipx install "gcovr==${COFFEE_EXPECTED_GCOVR_VERSION}"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Run the local pipeline
+        run: ./localPipeline.sh --no-run --verbose
+
+      - name: Build the release preset
+        run: |
+          cmake --preset linux-release
+          cmake --build --preset linux-release
+
+      - name: Package the Linux build
+        env:
+          COFFEE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          ./tools/package_linux.sh build/linux-release "dist/lvgl-coffee-dispenser-${COFFEE_VERSION}"
+          tar -czf "lvgl-coffee-dispenser-${COFFEE_VERSION}-linux-x86_64.tar.gz" \
+            -C dist "lvgl-coffee-dispenser-${COFFEE_VERSION}"
+          tar -czf "lvgl-coffee-dispenser-${COFFEE_VERSION}-doxygen-html.tar.gz" \
+            -C build/linux-debug/doxygen html
+          ls -la ./*.tar.gz
+
+      - name: Smoke-test the packaged application
+        env:
+          COFFEE_VERSION: ${{ steps.version.outputs.version }}
+          COFFEE_EXIT_AFTER_STARTUP_MS: "1000"
+        run: |
+          set -euo pipefail
+          "dist/lvgl-coffee-dispenser-${COFFEE_VERSION}/run.sh"
+          echo "the packaged application starts and exits cleanly"
+
+      - name: Upload the release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          if-no-files-found: error
+          retention-days: 14
+          path: ./*.tar.gz
+
+      - name: Write the release notes
+        if: github.ref_type == 'tag'
+        env:
+          COFFEE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          previous_tag="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          {
+            printf '## Changes\n\n'
+            if [ -n "${previous_tag}" ]; then
+              git log --no-merges --pretty='* %s' "${previous_tag}..${GITHUB_REF_NAME}"
+            else
+              git log --no-merges --pretty='* %s' "${GITHUB_REF_NAME}"
+            fi
+            printf '\n## Downloads\n\n'
+            printf '* **Linux (x86-64):** `lvgl-coffee-dispenser-%s-linux-x86_64.tar.gz` - unpack it and run `./run.sh`. SDL2 has to be installed on the system.\n' "${COFFEE_VERSION}"
+            printf '* **API documentation:** `lvgl-coffee-dispenser-%s-doxygen-html.tar.gz`\n\n' "${COFFEE_VERSION}"
+            printf 'This build passed the full project pipeline: semantic-version gate, unit tests, the 80%% line-coverage gate, an empty Doxygen warning log, Cppcheck and clang-format. The packaged binary was started once headlessly before publishing.\n'
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COFFEE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "LVGL Coffee Dispenser ${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            --verify-tag \
+            "lvgl-coffee-dispenser-${COFFEE_VERSION}-linux-x86_64.tar.gz" \
+            "lvgl-coffee-dispenser-${COFFEE_VERSION}-doxygen-html.tar.gz"

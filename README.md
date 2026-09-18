@@ -149,6 +149,20 @@ The project follows semantic versioning. `project(... VERSION <major>.<minor>.<p
 
 The local pipeline enforces this: the version must be a valid `MAJOR.MINOR.PATCH` triple and must be greater than the baseline version, which is the version at `HEAD` for a dirty working tree and the version at `HEAD~1` for a clean one.
 
+## Continuous Integration
+
+GitHub Actions mirrors the local gate:
+
+- `.github/workflows/ci.yml` runs `./localPipeline.sh --no-run --verbose` on every push and pull request (Ubuntu 24.04, SDL dummy video driver) and uploads the Doxygen, coverage, and Cppcheck reports as artifacts.
+- `.github/workflows/release.yml` reacts to a `v*` tag: it verifies that the tag matches the project version, runs the full pipeline, builds the release preset, packages the Linux build with `tools/package_linux.sh`, starts the packaged binary once headlessly, and publishes the archives as a GitHub release.
+
+Cutting a release is therefore:
+
+```bash
+git tag v0.3.0     # must equal the version in CMakeLists.txt
+git push origin v0.3.0
+```
+
 ## Software Engineering Tooling
 
 Formatting is checked without modifying files:

@@ -1,0 +1,104 @@
+# -----------------------------------------------------------------------------
+# LVGL Coffee Dispenser CI
+#
+# Runs exactly the verification that is run locally: ./localPipeline.sh performs
+# the submodule init, the semantic-version gate, configure+build, CTest, the
+# clang-format check, the coverage build with its 80% line-coverage gate, the
+# Doxygen build with its empty-warning-log gate, and Cppcheck. --no-run skips
+# only the final interactive app launch, which is what that option exists for.
+#
+# The SDL dummy video driver keeps every LVGL/SDL step headless on the runner.
+# -----------------------------------------------------------------------------
+name: CI
+
+on:
+  push:
+    branches: [master, master-github_two, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in sync with cmake_minimum_required() in CMakeLists.txt.
+  COFFEE_MIN_CMAKE_VERSION: "3.30"
+  COFFEE_EXPECTED_GCOVR_VERSION: "8.6"
+  SDL_VIDEODRIVER: dummy
+
+jobs:
+  local-pipeline:
+    name: Local pipeline (Linux, SDL2)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # The version gate compares against HEAD~1, so a shallow clone of a
+          # single commit is not enough.
+          fetch-depth: 0
+
+      - name: Install build and quality tooling
+        # Distribution packages: their exact release is fixed by the runner
+        # image and reported below, so a report difference can be traced.
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            build-essential \
+            ninja-build \
+            pkg-config \
+            libsdl2-dev \
+            clang-format \
+            cppcheck \
+            doxygen \
+            graphviz \
+            python3-pygments
+
+      - name: Install the pinned gcovr
+        run: |
+          pipx install "gcovr==${COFFEE_EXPECTED_GCOVR_VERSION}"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Report and verify the toolchain
+        run: |
+          set -euo pipefail
+          cmake --version | head -1
+          ninja --version
+          gcc --version | head -1
+          gcov --version | head -1
+          gcovr --version | head -1
+          # clang-format output can differ between major releases. The runner
+          # image pins this one; pin it explicitly here if it ever disagrees
+          # with the version used locally.
+          clang-format --version
+          cppcheck --version
+          doxygen --version
+          pkg-config --modversion sdl2
+          cmake_version="$(cmake --version | head -1 | awk '{print $3}')"
+          if [ "$(printf '%s\n%s\n' "${COFFEE_MIN_CMAKE_VERSION}" "${cmake_version}" | sort -V | head -1)" != "${COFFEE_MIN_CMAKE_VERSION}" ]; then
+            echo "::error::CMake ${cmake_version} is older than the required ${COFFEE_MIN_CMAKE_VERSION}."
+            exit 1
+          fi
+          gcovr --version | head -1 | grep -Fq "gcovr ${COFFEE_EXPECTED_GCOVR_VERSION}"
+
+      - name: Run the local pipeline
+        run: ./localPipeline.sh --no-run --verbose
+
+      - name: Upload the generated reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coffee-dispenser-reports
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            build/linux-debug/doxygen/html
+            build/linux-debug/doxygen/warnings.txt
+            build-coverage/coverage
+            reports/cppcheck
