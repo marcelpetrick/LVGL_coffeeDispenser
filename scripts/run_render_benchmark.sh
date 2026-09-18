@@ -19,6 +19,7 @@ RUNS=10
 VIDEO_DRIVER="dummy"
 FORCE_REDRAW=1
 PIN_CPU=""
+COMPARE_DIR=""
 OUTPUT=""
 
 print_usage() {
@@ -34,6 +35,9 @@ Options:
   --pin-cpu LIST        Pin the runs to CPU LIST (taskset syntax: 0, 0-3, 0,2); strongly
                         recommended on a machine with
                         frequency scaling or performance/efficiency cores
+  --compare PATH        Second build directory to compare against; the runs alternate
+                        between the two builds, which is the only reliable way to compare
+                        on a machine that drifts (thermal throttling, other load)
   --output FILE         Markdown report; default: LVGL_<lvgl version>_benchmark.md
   --help, -h            Show this help
 EOF
@@ -47,6 +51,7 @@ while [[ "$#" -gt 0 ]]; do
         --video-driver) shift; VIDEO_DRIVER="$1" ;;
         --idle) FORCE_REDRAW=0 ;;
         --pin-cpu) shift; PIN_CPU="$1" ;;  # validated below
+        --compare) shift; COMPARE_DIR="$1" ;;
         --output) shift; OUTPUT="$1" ;;
         --help|-h) print_usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; print_usage; exit 2 ;;
@@ -83,6 +88,15 @@ refresh_period="$(sed -n 's/^#define LV_DEF_REFR_PERIOD[[:space:]]\+\([0-9]\+\).
 # Named after the measured LVGL release, so results stay comparable across bumps.
 OUTPUT="${OUTPUT:-${PROJECT_ROOT}/LVGL_${lvgl_version}_benchmark.md}"
 
+compare_executable=""
+if [[ -n "${COMPARE_DIR}" ]]; then
+    compare_executable="${COMPARE_DIR}/lvgl_coffee_dispenser"
+    if [[ ! -x "${compare_executable}" ]]; then
+        echo "executable not found: ${compare_executable}" >&2
+        exit 1
+    fi
+fi
+
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
 
@@ -106,11 +120,18 @@ fi
 for run in $(seq 1 "${RUNS}"); do
     log_file="${work_dir}/run_${run}.log"
     echo "[INFO] run ${run}/${RUNS}: ${DURATION_MS} ms (driver=${VIDEO_DRIVER}, force_redraw=${FORCE_REDRAW})"
-    ${pin_command} env SDL_VIDEODRIVER="${VIDEO_DRIVER}" \
-        COFFEE_PERF_PROFILE=1 \
-        COFFEE_PERF_FORCE_REDRAW="${FORCE_REDRAW}" \
-        COFFEE_EXIT_AFTER_STARTUP_MS="${DURATION_MS}" \
-        "${executable}" > "${log_file}" 2>&1
+    run_once() {
+        ${pin_command} env SDL_VIDEODRIVER="${VIDEO_DRIVER}" \
+            COFFEE_PERF_PROFILE=1 \
+            COFFEE_PERF_FORCE_REDRAW="${FORCE_REDRAW}" \
+            COFFEE_EXIT_AFTER_STARTUP_MS="${DURATION_MS}" \
+            "$1" > "$2" 2>&1
+    }
+
+    if [[ -n "${compare_executable}" ]]; then
+        run_once "${compare_executable}" "${work_dir}/compare_${run}.log"
+    fi
+    run_once "${executable}" "${log_file}"
 
     if ! grep -q '\[PERF\] stage=summary' "${log_file}"; then
         echo "run ${run} produced no profiling output" >&2
@@ -147,6 +168,9 @@ aggregate() {
 }
 
 run_table=""
+memory_table=""
+rss_values=""
+heap_values=""
 flush_matches_render=1
 render_means=""
 flush_means=""
@@ -162,6 +186,9 @@ for run in $(seq 1 "${RUNS}"); do
     fps="$(field "${log_file}" summary fps)"
 
     run_table+="| ${run} | ${frames} | ${render_mean} | ${render_p95} | ${render_max} | ${flush_mean} | ${fps} |"$'\n'
+    memory_table+="| ${run} | $(field "${log_file}" memory lvgl_max_used_bytes) | $(field "${log_file}" memory lvgl_used_pct) | $(field "${log_file}" memory lvgl_frag_pct) | $(field "${log_file}" memory peak_rss_kb) |"$'\n'
+    rss_values+="$(field "${log_file}" memory peak_rss_kb)"$'\n'
+    heap_values+="$(field "${log_file}" memory lvgl_max_used_bytes)"$'\n'
     render_means+="${render_mean}"$'\n'
     flush_means+="${flush_mean}"$'\n'
     fps_values+="${fps}"$'\n'
@@ -175,11 +202,13 @@ for run in $(seq 1 "${RUNS}"); do
     fi
 done
 
-read -r render_agg flush_agg fps_agg frames_agg <<<"$(paste -d' ' \
+read -r render_agg flush_agg fps_agg frames_agg heap_agg rss_agg <<<"$(paste -d' ' \
     <(printf '%s' "${render_means}") \
     <(printf '%s' "${flush_means}") \
     <(printf '%s' "${fps_values}") \
-    <(printf '%s' "${frame_counts}") | aggregate)"
+    <(printf '%s' "${frame_counts}") \
+    <(printf '%s' "${heap_values}") \
+    <(printf '%s' "${rss_values}") | aggregate)"
 
 split_field() { printf '%s' "$1" | cut -d'|' -f"$2"; }
 
@@ -227,6 +256,31 @@ agg_row() {
     agg_row 'flush mean (us)' "${flush_agg}"
     agg_row 'frames per run' "${frames_agg}"
     agg_row 'fps' "${fps_agg}"
+    agg_row 'LVGL heap peak (bytes)' "${heap_agg}"
+    agg_row 'process peak RSS (kB)' "${rss_agg}"
+
+    if [[ -n "${compare_executable}" ]]; then
+        printf '\n## Paired comparison against `%s`\n\n' "${COMPARE_DIR}"
+        printf '| Run | baseline render (us) | this build render (us) | delta |\n'
+        printf '| ---: | ---: | ---: | ---: |\n'
+        for run in $(seq 1 "${RUNS}"); do
+            base_render="$(field "${work_dir}/compare_${run}.log" render mean_us)"
+            this_render="$(field "${work_dir}/run_${run}.log" render mean_us)"
+            printf '| %s | %s | %s | %s%% |\n' "${run}" "${base_render}" "${this_render}" \
+                "$(python3 -c "print(f'{(${this_render} - ${base_render}) / ${base_render} * 100:+.1f}')")"
+        done
+        printf '\nEach pair ran back to back, baseline first, so both sides met the same clock '
+        printf 'state and the same background load. Compare the pairs, not the absolute numbers: '
+        printf 'those move with temperature and with whatever else the machine is doing.\n'
+    fi
+
+    printf '\n## Memory per run\n\n'
+    printf '| Run | LVGL heap peak (bytes) | LVGL heap used (%%) | fragmentation (%%) | process peak RSS (kB) |\n'
+    printf '| ---: | ---: | ---: | ---: | ---: |\n'
+    printf '%s' "${memory_table}"
+    printf '\nThe LVGL heap figures come from `lv_mem_monitor()` and cover the pool LVGL manages '
+    printf 'itself, which is the number to size on a target. The process peak RSS is `ru_maxrss` '
+    printf 'and includes the SDL window, the frame buffers and the C library.\n'
 
     if [[ "${flush_matches_render}" -eq 1 ]]; then
         printf '\nOne fully invalidated frame costs about %s us of CPU time (render + flush), which is a ' "${frame_us}"

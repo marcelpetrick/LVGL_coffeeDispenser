@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 
 static bool env_flag_set(const char *name)
 {
@@ -88,6 +89,22 @@ static void report_stats(const char *name, coffee_perf_stats_t *stats)
                 summary.p95_us, summary.max_us, summary.dropped);
 }
 
+static void report_memory(void)
+{
+    /* LVGL's own heap first: on a target this is the pool that has to be sized,
+     * and unlike the process footprint it is unaffected by the host allocator. */
+    lv_mem_monitor_t heap;
+    lv_mem_monitor(&heap);
+
+    struct rusage usage;
+    const long peak_rss_kb = (getrusage(RUSAGE_SELF, &usage) == 0) ? usage.ru_maxrss : 0;
+
+    COFFEE_LOGI("[PERF] stage=memory lvgl_heap_bytes=%u lvgl_max_used_bytes=%u lvgl_used_pct=%u "
+                "lvgl_frag_pct=%u peak_rss_kb=%ld",
+                (unsigned)heap.total_size, (unsigned)heap.max_used, (unsigned)heap.used_pct,
+                (unsigned)heap.frag_pct, peak_rss_kb);
+}
+
 void coffee_perf_probe_report(coffee_perf_probe_t *probe, uint32_t runtime_ms)
 {
     if (probe == NULL || !probe->enabled) {
@@ -102,6 +119,7 @@ void coffee_perf_probe_report(coffee_perf_probe_t *probe, uint32_t runtime_ms)
 
     report_stats("render", &probe->render);
     report_stats("flush", &probe->flush);
+    report_memory();
 
     const uint32_t frames = probe->render.count;
     const uint32_t fps_centi = coffee_perf_fps_centi(frames, runtime_ms);
