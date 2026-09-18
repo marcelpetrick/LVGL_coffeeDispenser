@@ -108,7 +108,7 @@ cmake --preset linux-release && cmake --build --preset linux-release
 
 The script repeats the measurement ten times and writes `LVGL_<lvgl version>_benchmark.md` next to this file, with one row per run and the spread across them. `--pin-cpu` is worth using on any machine with frequency scaling or performance/efficiency cores: unpinned runs scatter far more than the differences being measured.
 
-Current reports: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md), plus a rendered before/after comparison in [docs/benchmark-lvgl-9.3-vs-9.6.html](docs/benchmark-lvgl-9.3-vs-9.6.html). Short version: the 9.6 software renderer needs 4616 us instead of 4916 us per fully redrawn 800x480 frame, 6.1% less CPU time, at the price of about 1.8 MB more resident memory.
+Current reports: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md), plus a rendered before/after comparison in [docs/benchmark-lvgl-9.3-vs-9.6.html](docs/benchmark-lvgl-9.3-vs-9.6.html). Short version: the 9.6 software renderer needs 3968 us instead of 4872 us per fully redrawn 800x480 frame, a 1.23x speed-up, at the price of about 1.8 MB more resident memory.
 
 ## Demo Recording
 

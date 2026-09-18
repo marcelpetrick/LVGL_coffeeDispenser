@@ -323,24 +323,24 @@
   <header class="masthead">
     <p class="eyebrow">Render benchmark &middot; LVGL Coffee Dispenser HMI</p>
     <h1>Did LVGL 9.6 get faster?</h1>
-    <p class="lede">For the software renderer on this workload: <strong>yes, by about 6%</strong> &mdash; 4916&nbsp;&micro;s down to 4616&nbsp;&micro;s of CPU time per fully redrawn 800&times;480 frame. Ten pinned runs per version, distributions that do not overlap, and a memory bill that went up while the clock went down.</p>
+    <p class="lede">For the software renderer on this workload: <strong>yes, by 19%</strong> &mdash; 4872&nbsp;&micro;s down to 3968&nbsp;&micro;s of CPU time per fully redrawn 800&times;480 frame, a 1.23&times; speed-up. Ten pinned runs per version, distributions that come nowhere near touching, and a memory bill that went up while the clock went down.</p>
   </header>
 
   <div class="tiles">
     <div class="tile">
       <span class="label">Render per frame</span>
-      <span class="value is-good">&minus;6.1%</span>
-      <span class="sub">4916 &rarr; 4616 &micro;s</span>
+      <span class="value is-good">&minus;18.6%</span>
+      <span class="sub">4872 &rarr; 3968 &micro;s &middot; 1.23&times;</span>
     </div>
     <div class="tile">
       <span class="label">Flush per frame</span>
-      <span class="value is-flat">+1.0%</span>
-      <span class="sub">3525 &rarr; 3562 &micro;s &middot; noise</span>
+      <span class="value is-good">&minus;12.5%</span>
+      <span class="sub">3487 &rarr; 3051 &micro;s</span>
     </div>
     <div class="tile">
       <span class="label">Frame capacity</span>
-      <span class="value is-good">+3.2%</span>
-      <span class="sub">118 &rarr; 122 fps headroom</span>
+      <span class="value is-good">+19%</span>
+      <span class="sub">120 &rarr; 142 fps headroom</span>
     </div>
     <div class="tile">
       <span class="label">Peak RSS</span>
@@ -350,7 +350,7 @@
   </div>
 
   <h2>Every run, both versions</h2>
-  <p class="section-note">Each dot is one 5-second run: the mean time LVGL spent rasterizing a fully invalidated frame. The two clouds do not touch &mdash; the slowest 9.6 run is still faster than the fastest 9.3 run &mdash; which is what makes a 6% difference believable on a machine this noisy.</p>
+  <p class="section-note">Each dot is one 5-second run: the mean time LVGL spent rasterizing a fully invalidated frame. The two clouds are far apart &mdash; the slowest 9.6 run is 700&nbsp;&micro;s faster than the fastest 9.3 run &mdash; and each version stays inside a 200&nbsp;&micro;s band, so the gap is the versions and not the machine.</p>
 
   <div class="legend">
     <span><i class="swatch sw93"></i>LVGL 9.3.0</span>
@@ -364,11 +364,11 @@
   </figure>
 
   <h2>Where the frame time goes</h2>
-  <p class="section-note">A frame costs rasterization plus the handover of the finished buffer to SDL. Only the first half is LVGL's own work, and only the first half moved.</p>
+  <p class="section-note">A frame costs rasterization plus the handover of the finished buffer to SDL. Both halves moved, which was not expected: the flush is an SDL upload, so its gain has to come from what LVGL hands over rather than from SDL.</p>
 
   <figure>
     <div class="chart-scroll"><svg id="budget" viewBox="0 0 760 210" role="img" aria-label="Stacked bars of frame budget: 9.3.0 is 4916 microseconds render plus 3525 flush, 9.6.0 is 4616 plus 3562"></svg></div>
-    <figcaption>Mean frame budget, same runs. The flush is an SDL texture upload and is version-independent.</figcaption>
+    <figcaption>Mean frame budget, same runs, same profiler build on both sides.</figcaption>
   </figure>
 
   <h2>The numbers</h2>
@@ -388,29 +388,29 @@
       <tfoot>
         <tr>
           <td>mean</td>
-          <td>4916</td>
-          <td>4616</td>
-          <td>&minus;300</td>
-          <td>3525</td>
-          <td>3562</td>
+          <td>4872</td>
+          <td>3968</td>
+          <td>&minus;904</td>
+          <td>3487</td>
+          <td>3051</td>
         </tr>
         <tr>
           <td>std dev</td>
-          <td>104</td>
-          <td>106</td>
+          <td>63</td>
+          <td>64</td>
           <td>&mdash;</td>
-          <td>86</td>
-          <td>88</td>
+          <td>45</td>
+          <td>53</td>
         </tr>
       </tfoot>
     </table>
   </div>
-  <p class="section-note" style="margin-top:10px">All values in microseconds. A second, interleaved A/B measurement &mdash; 10 alternating rounds of the two binaries on the same pinned core &mdash; put the gap at &minus;8.0% on the median, so the effect survives a different run order.</p>
+  <p class="section-note" style="margin-top:10px">All values in microseconds. Both versions were measured with the same profiler, which re-dirties the screen once per refresh; an earlier version of it invalidated from the main loop several times per refresh, which piled redundant work on both sides and understated the difference as 6%.</p>
 
-  <h2>Is 6% a good improvement?</h2>
+  <h2>Is 1.23&times; a good improvement?</h2>
   <div class="verdict">
-    <p class="tight"><strong>For what it costs the integrator, yes.</strong> It arrives by bumping a submodule: no configuration change, no API migration for our code, no visual difference. On an embedded target the same 300&nbsp;&micro;s per frame is CPU time handed back to the application, and it compounds with every redraw.</p>
-    <p>It is also well under the &ldquo;up to 1.33&times;&rdquo; that the release notes advertise &mdash; and that is expected, not suspicious. That figure is a best case on the boards LVGL measured: ARM cores, usually RGB565 buffers, with the blend paths that got the most attention. This run is x86-64, XRGB8888, one draw unit, and a UI made mostly of large opaque fills, rounded panels and text. Different pixel format, different code paths, different ceiling. The honest reading: <strong>the optimization is real and free, our workload collects roughly a fifth of the headline number</strong>, and the price is a bigger binary and about 1.8&nbsp;MB more resident memory.</p>
+    <p class="tight"><strong>For what it costs the integrator, yes.</strong> It arrives by bumping a submodule: no configuration change, no visual difference, and on our side only a handful of deprecated calls to migrate. On an embedded target those 904&nbsp;&micro;s per frame are CPU time handed straight back to the application, and they compound with every redraw.</p>
+    <p>It also lands close to the &ldquo;up to 1.33&times;&rdquo; the release notes advertise, on hardware and in a pixel format LVGL did not optimise for: this run is x86-64, XRGB8888, one draw unit, and a UI of large opaque fills, rounded panels and text, while their figure comes from ARM boards usually running RGB565. Getting 1.23&times; of an up-to-1.33&times; claim under different conditions is a good sign that the work went into the shared code and not into one special case. The price is a bigger binary and about 1.8&nbsp;MB more resident memory &mdash; on a device where RAM is the binding constraint, that is the trade to weigh.</p>
   </div>
 
   <h2>Did we measure the right thing?</h2>
@@ -431,7 +431,7 @@
     </li>
     <li>
       <span class="k">Machine</span>
-      <span><b>x86-64 laptop, single draw unit.</b> None of LVGL's ARM SIMD paths are exercised, and a hybrid CPU with a powersave governor needed core pinning before the numbers held still &mdash; the unpinned runs scattered by &plusmn;1300&nbsp;&micro;s and pointed the wrong way.</span>
+      <span><b>x86-64 laptop, single draw unit.</b> None of LVGL's ARM SIMD paths are exercised, and a hybrid CPU with a powersave governor needed core pinning before the numbers held still &mdash; the unpinned runs scattered by &plusmn;1300&nbsp;&micro;s and pointed the wrong way. Four software draw units were tried as well and returned only 4%, so the threads were not worth their cost here.</span>
     </li>
     <li>
       <span class="k">Not measured</span>
@@ -465,10 +465,10 @@
 <script>
   (function () {
     var data = {
-      r93: [5112, 5058, 4821, 4931, 4842, 5027, 4825, 4877, 4821, 4851],
-      r96: [4726, 4613, 4479, 4769, 4545, 4464, 4539, 4588, 4741, 4701],
-      f93: [3681, 3641, 3457, 3526, 3465, 3632, 3446, 3492, 3451, 3463],
-      f96: [3669, 3562, 3450, 3695, 3508, 3435, 3497, 3532, 3658, 3618]
+      r93: [4889, 4905, 4955, 4830, 4809, 4911, 4822, 4748, 4901, 4946],
+      r96: [3921, 3965, 4052, 4064, 3955, 4026, 3963, 3915, 3840, 3984],
+      f93: [3497, 3504, 3537, 3472, 3420, 3529, 3468, 3397, 3513, 3529],
+      f96: [3010, 3052, 3114, 3128, 3042, 3104, 3047, 3015, 2938, 3059]
     };
     var mean = function (a) { return a.reduce(function (s, v) { return s + v; }, 0) / a.length; };
     var NS = "http://www.w3.org/2000/svg";
@@ -499,15 +499,15 @@
     (function () {
       var svg = document.getElementById("strip");
       var W = 760, H = 250, L = 92, R = 118, T = 34, B = 46;
-      var lo = 4380, hi = 5220;
+      var lo = 3740, hi = 5080;
       var x = function (v) { return L + (v - lo) / (hi - lo) * (W - L - R); };
       /* The means come from the reports, so chart and table cannot disagree. */
       var rows = [
-        { key: "r93", label: "9.3.0", color: "var(--s93)", y: T + 44, mean: 4916 },
-        { key: "r96", label: "9.6.0", color: "var(--s96)", y: T + 126, mean: 4616 }
+        { key: "r93", label: "9.3.0", color: "var(--s93)", y: T + 44, mean: 4872 },
+        { key: "r96", label: "9.6.0", color: "var(--s96)", y: T + 126, mean: 3968 }
       ];
 
-      [4400, 4600, 4800, 5000, 5200].forEach(function (tick) {
+      [3800, 4100, 4400, 4700, 5000].forEach(function (tick) {
         svg.appendChild(el("line", {
           x1: x(tick), x2: x(tick), y1: T, y2: H - B,
           stroke: "var(--rule)", "stroke-width": 1
@@ -518,7 +518,7 @@
         }, tick));
       });
       svg.appendChild(el("text", {
-        x: x(4800), y: H - 10, fill: "var(--ink-3)", "font-size": 11.5, "text-anchor": "middle"
+        x: x(4400), y: H - 10, fill: "var(--ink-3)", "font-size": 11.5, "text-anchor": "middle"
       }, "render time per frame (µs) — lower is better"));
 
       rows.forEach(function (row) {
@@ -566,7 +566,7 @@
       svg.appendChild(el("text", {
         x: (x(m96) + x(m93)) / 2, y: T + 2, fill: "var(--ink-2)",
         "font-size": 12, "text-anchor": "middle"
-      }, "−300 µs (−6.1%)"));
+      }, "−904 µs (−18.6%)"));
     })();
 
     /* ---- frame budget bars ---- */
@@ -576,8 +576,8 @@
       var max = 9000;
       var x = function (v) { return L + v / max * (W - L - R); };
       var bars = [
-        { label: "9.3.0", color: "var(--s93)", render: 4916, flush: 3525, y: T + 14 },
-        { label: "9.6.0", color: "var(--s96)", render: 4616, flush: 3562, y: T + 82 }
+        { label: "9.3.0", color: "var(--s93)", render: 4872, flush: 3487, y: T + 14 },
+        { label: "9.6.0", color: "var(--s96)", render: 3968, flush: 3051, y: T + 82 }
       ];
 
       [0, 2000, 4000, 6000, 8000].forEach(function (tick) {
