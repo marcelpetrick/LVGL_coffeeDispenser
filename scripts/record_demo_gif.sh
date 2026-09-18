@@ -13,10 +13,12 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${PROJECT_ROOT}/build/linux-release"
 OUTPUT="${PROJECT_ROOT}/media/demo.gif"
 DURATION_S=11
-FPS=12
+FPS=10
 DISPLAY_NUM=":97"
 WIDTH=800
 HEIGHT=480
+GIF_WIDTH=640
+MAX_COLORS=96
 
 print_usage() {
     cat <<EOF
@@ -27,6 +29,7 @@ Options:
   --output FILE      GIF to write; default: media/demo.gif
   --duration-s S     Recording length; default: ${DURATION_S}
   --fps N            GIF frame rate; default: ${FPS}
+  --gif-width PX     Width of the produced GIF; default: ${GIF_WIDTH}
   --display NUM      X display for Xvfb; default: ${DISPLAY_NUM}
   --help, -h         Show this help
 EOF
@@ -38,6 +41,7 @@ while [[ "$#" -gt 0 ]]; do
         --output) shift; OUTPUT="$1" ;;
         --duration-s) shift; DURATION_S="$1" ;;
         --fps) shift; FPS="$1" ;;
+        --gif-width) shift; GIF_WIDTH="$1" ;;
         --display) shift; DISPLAY_NUM="$1" ;;
         --help|-h) print_usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; print_usage; exit 2 ;;
@@ -94,11 +98,13 @@ app_pid=""
 
 echo "[INFO] converting to GIF"
 mkdir -p "$(dirname "${OUTPUT}")"
+# The cross-fades touch nearly every pixel, so a downscaled frame and a small
+# palette keep the file in a size a README can carry.
 ffmpeg -loglevel error -y -i "${work_dir}/demo.mp4" \
-    -vf "fps=${FPS},scale=${WIDTH}:-1:flags=lanczos,palettegen=stats_mode=diff" \
+    -vf "fps=${FPS},scale=${GIF_WIDTH}:-1:flags=lanczos,palettegen=max_colors=${MAX_COLORS}:stats_mode=diff" \
     "${work_dir}/palette.png"
 ffmpeg -loglevel error -y -i "${work_dir}/demo.mp4" -i "${work_dir}/palette.png" \
-    -lavfi "fps=${FPS},scale=${WIDTH}:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=3" \
+    -lavfi "fps=${FPS},scale=${GIF_WIDTH}:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" \
     "${OUTPUT}"
 
 echo "[INFO] wrote ${OUTPUT} ($(du -h "${OUTPUT}" | cut -f1))"
