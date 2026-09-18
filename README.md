@@ -110,7 +110,7 @@ cmake --preset linux-release && cmake --build --preset linux-release
 
 The script repeats the measurement ten times and writes `LVGL_<lvgl version>_benchmark.md` next to this file, with one row per run and the spread across them. `--pin-cpu` is worth using on any machine with frequency scaling or performance/efficiency cores: unpinned runs scatter far more than the differences being measured.
 
-Current reports: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md), plus a rendered before/after comparison in [docs/benchmark-lvgl-9.3-vs-9.6.html](docs/benchmark-lvgl-9.3-vs-9.6.html). Short version: the 9.6 software renderer needs about 7% less CPU time per fully redrawn 800x480 frame (measured as back-to-back pairs, since the absolute numbers drift more than the effect), and costs about 1.8 MB more resident memory while LVGL's own heap grows by 1.3 KB.
+Current reports: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md), plus a rendered before/after comparison at [marcelpetrick.github.io/LVGL_coffeeDispenser](https://marcelpetrick.github.io/LVGL_coffeeDispenser/benchmark-lvgl-9.3-vs-9.6.html). Short version: the 9.6 software renderer needs about 7% less CPU time per fully redrawn 800x480 frame (measured as back-to-back pairs, since the absolute numbers drift more than the effect), and costs about 1.8 MB more resident memory while LVGL's own heap grows by 1.3 KB.
 
 ## Demo Recording
 
@@ -168,7 +168,7 @@ config/           app_config.h + lv_conf.h
 - [Architecture](docs/architecture.md) - layering rules and the UI/controller/service split.
 - [UI flow](docs/ui-flow.md) - screens and the transitions between them.
 - [Build and deploy](docs/build-and-deploy.md) - build paths, tooling outputs, packaging.
-- [Renderer comparison](docs/benchmark-lvgl-9.3-vs-9.6.html) - LVGL 9.3.0 against 9.6.0 on this HMI, rendered.
+- [Renderer comparison](https://marcelpetrick.github.io/LVGL_coffeeDispenser/benchmark-lvgl-9.3-vs-9.6.html) - LVGL 9.3.0 against 9.6.0 on this HMI, rendered through GitHub Pages ([source](docs/benchmark-lvgl-9.3-vs-9.6.html)).
 - [Agent guide](AGENTS.md) - repository conventions for coding agents.
 - [Software engineering plan](SWE_PLAN.md) - the engineering plan this repository follows.
 - [License](LICENSE) - GPLv3 or later.
