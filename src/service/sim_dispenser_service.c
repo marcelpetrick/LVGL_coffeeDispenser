@@ -152,11 +152,13 @@ static void sim_tick(coffee_dispenser_service_t *service, uint32_t elapsed_ms)
         return;
 
     sim->elapsed_ms += elapsed_ms;
-    uint8_t progress = (uint8_t)((sim->elapsed_ms * 100U) / sim->duration_ms);
-    if (progress > 100)
-        progress = 100;
+    /* Compute and clamp in a wide type: casting first would wrap a long tick
+     * around to a small percentage and the dispense would never finish. */
+    uint32_t progress = (uint32_t)(((uint64_t)sim->elapsed_ms * 100U) / sim->duration_ms);
+    if (progress > 100U)
+        progress = 100U;
 
-    sim->dispense.progress_pct = progress;
+    sim->dispense.progress_pct = (uint8_t)progress;
     uint32_t remaining_ms =
         (sim->duration_ms > sim->elapsed_ms) ? (sim->duration_ms - sim->elapsed_ms) : 0;
     sim->dispense.remaining_s = (uint16_t)((remaining_ms + 999U) / 1000U);

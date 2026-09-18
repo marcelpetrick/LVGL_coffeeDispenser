@@ -28,6 +28,16 @@ if(COFFEE_ENABLE_COVERAGE)
 endif()
 add_test(NAME perf_stats COMMAND test_perf_stats)
 
+add_executable(test_sim_dispenser_service
+    test_sim_dispenser_service.c
+)
+target_link_libraries(test_sim_dispenser_service PRIVATE coffee_core)
+if(COFFEE_ENABLE_COVERAGE)
+    target_compile_options(test_sim_dispenser_service PRIVATE -O0 -g --coverage)
+    target_link_options(test_sim_dispenser_service PRIVATE --coverage)
+endif()
+add_test(NAME sim_dispenser_service COMMAND test_sim_dispenser_service)
+
 add_test(
     NAME app_startup_smoke
     COMMAND ${CMAKE_COMMAND} -E env
