@@ -6,7 +6,7 @@ This repository contains a desktop-first LVGL prototype for a touch-based coffee
 
 **Note: projected is generated with AI.**
 
-**License: GPLv3 or later. See `LICENSE`.**
+**License: GPLv3 or later. See [LICENSE](LICENSE).**
 
 ## Project Overview
 
@@ -235,7 +235,10 @@ The SDL desktop integration is isolated from the core application logic. The con
 
 Related documentation:
 
-- `documents/00_requirements.md`
-- `docs/architecture.md`
-- `docs/ui-flow.md`
-- `docs/build-and-deploy.md`
+- [Requirements](documents/00_requirements.md) - what the prototype is supposed to do.
+- [Architecture](docs/architecture.md) - layering rules and the UI/controller/service split.
+- [UI flow](docs/ui-flow.md) - screens and the transitions between them.
+- [Build and deploy](docs/build-and-deploy.md) - build paths, tooling outputs, packaging.
+- [Agent guide](AGENTS.md) - repository conventions for coding agents.
+- [Software engineering plan](SWE_PLAN.md) - the engineering plan this repository follows.
+- [License](LICENSE) - GPLv3 or later.
