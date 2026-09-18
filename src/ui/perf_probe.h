@@ -15,7 +15,7 @@
  * is switched on by the environment, which keeps the normal run untouched:
  *
  *   COFFEE_PERF_PROFILE=1       collect and report timings
- *   COFFEE_PERF_FORCE_REDRAW=1  invalidate the active screen every iteration,
+ *   COFFEE_PERF_FORCE_REDRAW=1  invalidate the active screen once per refresh,
  *                               which turns an idle UI into a full-screen
  *                               rendering load and makes runs comparable
  */
@@ -31,9 +31,6 @@ typedef struct {
 
 /** Read the environment and, when enabled, attach to the display. */
 void coffee_perf_probe_init(coffee_perf_probe_t *probe, lv_display_t *display);
-
-/** Call once per main-loop iteration; forces a redraw when asked to. */
-void coffee_perf_probe_tick(coffee_perf_probe_t *probe);
 
 /** Log the collected timings as machine-readable `[PERF] key=value` lines. */
 void coffee_perf_probe_report(coffee_perf_probe_t *probe, uint32_t runtime_ms);

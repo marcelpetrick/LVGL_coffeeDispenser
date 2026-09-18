@@ -1,7 +1,7 @@
-# Rendering benchmark - LVGL Coffee Dispenser 0.9.0
+# Rendering benchmark - LVGL Coffee Dispenser 0.10.0
 
-- Date: 2026-09-18 21:32:03Z
-- Application version: 0.9.0
+- Date: 2026-09-18 21:51:49Z
+- Application version: 0.10.0
 - LVGL version: 9.6.0 (software renderer, single draw unit, no GPU)
 - Resolution: 800 x 480, 32 bit per pixel
 - SDL video driver: `dummy`
@@ -15,27 +15,27 @@
 
 | Run | Frames | render mean (us) | render p95 (us) | render max (us) | flush mean (us) | fps |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 142 | 4726 | 5868 | 8862 | 3669 | 28.38 |
-| 2 | 143 | 4613 | 5276 | 9057 | 3562 | 28.59 |
-| 3 | 143 | 4479 | 5139 | 6603 | 3450 | 28.60 |
-| 4 | 143 | 4769 | 8134 | 10833 | 3695 | 28.57 |
-| 5 | 143 | 4545 | 5173 | 10491 | 3508 | 28.56 |
-| 6 | 143 | 4464 | 5168 | 5660 | 3435 | 28.58 |
-| 7 | 143 | 4539 | 5322 | 7538 | 3497 | 28.55 |
-| 8 | 142 | 4588 | 5428 | 7129 | 3532 | 28.38 |
-| 9 | 142 | 4741 | 5812 | 10951 | 3658 | 28.39 |
-| 10 | 142 | 4701 | 5717 | 6735 | 3618 | 28.40 |
+| 1 | 145 | 3921 | 4550 | 5406 | 3010 | 29.00 |
+| 2 | 145 | 3965 | 4456 | 7938 | 3052 | 28.99 |
+| 3 | 145 | 4052 | 4597 | 7685 | 3114 | 28.97 |
+| 4 | 144 | 4064 | 4752 | 8377 | 3128 | 28.80 |
+| 5 | 145 | 3955 | 4519 | 6754 | 3042 | 28.97 |
+| 6 | 145 | 4026 | 4643 | 9256 | 3104 | 28.99 |
+| 7 | 145 | 3963 | 4413 | 6800 | 3047 | 28.95 |
+| 8 | 145 | 3915 | 4442 | 6458 | 3015 | 28.98 |
+| 9 | 145 | 3840 | 4301 | 4507 | 2938 | 29.00 |
+| 10 | 145 | 3984 | 4610 | 9156 | 3059 | 28.97 |
 
 ## Across the 10 runs
 
 | Metric | mean | min | max | stddev |
 | --- | ---: | ---: | ---: | ---: |
-| render mean (us) | 4616 | 4464 | 4769 | 106 |
-| flush mean (us) | 3562 | 3435 | 3695 | 88.43 |
-| frames per run | 143 | 142 | 143 | 0.49 |
-| fps | 28.50 | 28.38 | 28.60 | 0.09 |
+| render mean (us) | 3968 | 3840 | 4064 | 64.42 |
+| flush mean (us) | 3051 | 2938 | 3128 | 53.49 |
+| frames per run | 145 | 144 | 145 | 0.30 |
+| fps | 28.96 | 28.80 | 29.00 | 0.06 |
 
-One fully invalidated frame costs about 8178 us of CPU time (render + flush), which is a capacity of roughly 122 frames/s. The measured frame rate is the rate LVGL asks for: it refreshes at most every LV_DEF_REFR_PERIOD = 33 ms, so about 30 frames/s is the ceiling of this configuration, and the difference between the two numbers is the headroom that is left for application logic on a slower target.
+One fully invalidated frame costs about 7019 us of CPU time (render + flush), which is a capacity of roughly 142 frames/s. The measured frame rate is the rate LVGL asks for: it refreshes at most every LV_DEF_REFR_PERIOD = 33 ms, so about 30 frames/s is the ceiling of this configuration, and the difference between the two numbers is the headroom that is left for application logic on a slower target.
 
 `render` is the LVGL software rendering of the invalidated area, `flush` is handing the rendered buffer to SDL. Both are measured inside the display driver through the LVGL render and flush events, so the numbers exclude the main loop delay. With the `dummy` video driver no GPU or compositor is involved; use `--video-driver x11` to include the real presentation path.
 

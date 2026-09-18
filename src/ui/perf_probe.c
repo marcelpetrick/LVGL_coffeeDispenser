@@ -12,6 +12,19 @@ static bool env_flag_set(const char *name)
     return value != NULL && value[0] != '\0' && strcmp(value, "0") != 0;
 }
 
+static void refr_ready_cb(lv_event_t *event)
+{
+    /* Re-dirty the screen as soon as the refresh is done: that is exactly one
+     * invalidation per rendered frame, and it keeps LVGL's refresh timer from
+     * pausing. Invalidating from the main loop instead would repeat the same
+     * call several times per refresh period for nothing. */
+    lv_obj_t *screen = lv_screen_active();
+    if (screen != NULL) {
+        lv_obj_invalidate(screen);
+    }
+    (void)event;
+}
+
 static void render_start_cb(lv_event_t *event)
 {
     coffee_perf_probe_t *probe = lv_event_get_user_data(event);
@@ -55,24 +68,15 @@ void coffee_perf_probe_init(coffee_perf_probe_t *probe, lv_display_t *display)
 
     probe->display = display;
 
+    if (probe->force_redraw) {
+        lv_display_add_event_cb(display, refr_ready_cb, LV_EVENT_REFR_READY, probe);
+    }
     lv_display_add_event_cb(display, render_start_cb, LV_EVENT_RENDER_START, probe);
     lv_display_add_event_cb(display, render_ready_cb, LV_EVENT_RENDER_READY, probe);
     lv_display_add_event_cb(display, flush_start_cb, LV_EVENT_FLUSH_START, probe);
     lv_display_add_event_cb(display, flush_finish_cb, LV_EVENT_FLUSH_FINISH, probe);
 
     COFFEE_LOGI("render profiling enabled (force_redraw=%d)", probe->force_redraw ? 1 : 0);
-}
-
-void coffee_perf_probe_tick(coffee_perf_probe_t *probe)
-{
-    if (probe == NULL || !probe->enabled || !probe->force_redraw) {
-        return;
-    }
-
-    lv_obj_t *screen = lv_screen_active();
-    if (screen != NULL) {
-        lv_obj_invalidate(screen);
-    }
 }
 
 static void report_stats(const char *name, coffee_perf_stats_t *stats)
@@ -87,6 +91,12 @@ static void report_stats(const char *name, coffee_perf_stats_t *stats)
 void coffee_perf_probe_report(coffee_perf_probe_t *probe, uint32_t runtime_ms)
 {
     if (probe == NULL || !probe->enabled) {
+        return;
+    }
+    if (probe->display == NULL) {
+        /* Without a display the summary could only report LVGL's implicit
+         * default one, which is not what was measured. */
+        COFFEE_LOGW("[PERF] no display attached, summary skipped");
         return;
     }
 

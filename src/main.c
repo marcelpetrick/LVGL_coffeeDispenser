@@ -59,7 +59,6 @@ int main(void)
         runtime_ms += elapsed;
 
         lv_tick_inc(elapsed);
-        coffee_perf_probe_tick(&perf_probe);
         coffee_demo_tour_tick(&demo_tour, elapsed);
         coffee_app_controller_tick(&app, elapsed);
         coffee_ui_manager_tick(&ui, elapsed);
