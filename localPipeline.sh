@@ -23,14 +23,15 @@ Run the local LVGL Coffee Dispenser validation pipeline.
 
 Stages:
   1. Initialize git submodules
-  2. Configure with CMake preset
-  3. Build
-  4. Run CTest
-  5. Run clang-format in non-mutating check mode
-  6. Build coverage configuration and generate coverage reports
-  7. Generate Doxygen documentation
-  8. Run Cppcheck static analysis
-  9. Optionally launch the app briefly as a smoke run
+  2. Check that the project version follows semver and was bumped
+  3. Configure with CMake preset
+  4. Build
+  5. Run CTest
+  6. Run clang-format in non-mutating check mode
+  7. Build coverage configuration and generate coverage reports
+  8. Generate Doxygen documentation
+  9. Run Cppcheck static analysis
+ 10. Optionally launch the app briefly as a smoke run
 
 Options:
   --preset NAME      CMake preset to use; default: ${DEFAULT_PRESET}
@@ -149,6 +150,75 @@ stage_submodules() {
         return 0
     fi
     record_result "Submodules" "FAIL" "git submodule update failed"
+    return 1
+}
+
+project_version_at() {
+    local revision="$1"
+    local content
+    if [[ -z "${revision}" ]]; then
+        content="$(cat "${PROJECT_ROOT}/CMakeLists.txt" 2>/dev/null)" || return 1
+    else
+        content="$(git -C "${PROJECT_ROOT}" show "${revision}:CMakeLists.txt" 2>/dev/null)" || return 1
+    fi
+    printf '%s\n' "${content}" |
+        sed -n 's/^[[:space:]]*VERSION[[:space:]]\+\([0-9]\+\.[0-9]\+\.[0-9]\+\)[[:space:]]*$/\1/p' |
+        head -1
+}
+
+version_is_greater() {
+    local candidate="$1" reference="$2"
+    if [[ "${candidate}" == "${reference}" ]]; then
+        return 1
+    fi
+    [[ "$(printf '%s\n%s\n' "${candidate}" "${reference}" | sort -V | tail -1)" == "${candidate}" ]]
+}
+
+stage_version() {
+    log "Checking the project version."
+
+    local current
+    current="$(project_version_at "")"
+    if [[ ! "${current}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+        error "CMakeLists.txt does not declare a valid semantic version (MAJOR.MINOR.PATCH)."
+        record_result "Version" "FAIL" "Invalid version '${current}'"
+        return 1
+    fi
+
+    if ! git -C "${PROJECT_ROOT}" rev-parse --verify --quiet HEAD >/dev/null 2>&1; then
+        record_result "Version" "PASS" "${current} (no commit to compare with)"
+        return 0
+    fi
+
+    # A dirty tree is compared against HEAD, because the pending change still
+    # has to bump the version. A clean tree is compared against HEAD~1, which
+    # verifies that the commit just made did bump it.
+    local baseline_revision
+    if [[ -n "$(git -C "${PROJECT_ROOT}" status --porcelain 2>/dev/null)" ]]; then
+        baseline_revision="HEAD"
+    else
+        baseline_revision="HEAD~1"
+    fi
+
+    if ! git -C "${PROJECT_ROOT}" rev-parse --verify --quiet "${baseline_revision}^{commit}" >/dev/null 2>&1; then
+        record_result "Version" "PASS" "${current} (no baseline commit ${baseline_revision})"
+        return 0
+    fi
+
+    local baseline
+    baseline="$(project_version_at "${baseline_revision}")"
+    if [[ -z "${baseline}" ]]; then
+        record_result "Version" "PASS" "${current} (${baseline_revision} declares no version)"
+        return 0
+    fi
+
+    if version_is_greater "${current}" "${baseline}"; then
+        record_result "Version" "PASS" "${current} > ${baseline} (${baseline_revision})"
+        return 0
+    fi
+
+    error "Version ${current} does not exceed ${baseline} from ${baseline_revision}: bump at least the patch level."
+    record_result "Version" "FAIL" "${current} <= ${baseline} (${baseline_revision})"
     return 1
 }
 
@@ -418,6 +488,7 @@ main() {
 
     local failed=0
     stage_submodules || failed=1
+    stage_version || failed=1
     stage_configure || failed=1
     stage_build || failed=1
     stage_tests || failed=1

@@ -117,6 +117,7 @@ The preferred local validation command is:
 The local pipeline performs:
 
 - git submodule initialization
+- semantic-version gate (the version in `CMakeLists.txt` has to be valid and bumped)
 - CMake configure with the selected preset
 - build
 - CTest execution
@@ -136,7 +137,17 @@ Useful options:
 ./localPipeline.sh --preset linux-debug
 ```
 
-`tools/full_check.sh` is kept as a compatibility wrapper around the local pipeline.
+`tools/full_check.sh` is kept as a compatibility wrapper around the local pipeline; it always adds `--no-run`.
+
+## Versioning
+
+The project follows semantic versioning. `project(... VERSION <major>.<minor>.<patch>)` in `CMakeLists.txt` is the single source of truth: it is compiled in as `COFFEE_APP_VERSION` and used as the Doxygen `PROJECT_NUMBER`.
+
+- Every commit bumps at least the patch level.
+- A notable feature bumps the minor level.
+- The major level is bumped on explicit request only.
+
+The local pipeline enforces this: the version must be a valid `MAJOR.MINOR.PATCH` triple and must be greater than the baseline version, which is the version at `HEAD` for a dirty working tree and the version at `HEAD~1` for a clean one.
 
 ## Software Engineering Tooling
 
