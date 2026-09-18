@@ -4,6 +4,7 @@
 #include "ui/ui_manager.h"
 #include "ui/ui_theme.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define SHOWCASE_SECTION_WIDTH LV_PCT(100)
@@ -139,6 +140,38 @@ static lv_obj_t *create_card(lv_obj_t *parent, const char *title)
     return card;
 }
 
+static lv_obj_t *create_flex_list(lv_obj_t *parent, const char *heading)
+{
+    lv_obj_t *list = lv_obj_create(parent);
+    lv_obj_set_size(list, LV_PCT(92), 122);
+    lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(list, 0, 0);
+    lv_obj_set_style_pad_all(list, 0, 0);
+    lv_obj_set_style_pad_row(list, 4, 0);
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_scroll_dir(list, LV_DIR_VER);
+
+    lv_obj_t *title = lv_label_create(list);
+    lv_label_set_text(title, heading);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xb6c0ca), 0);
+
+    return list;
+}
+
+static lv_obj_t *create_flex_list_button(lv_obj_t *list, const char *text)
+{
+    lv_obj_t *entry = lv_button_create(list);
+    lv_obj_set_width(entry, LV_PCT(100));
+    lv_obj_set_height(entry, LV_SIZE_CONTENT);
+    lv_obj_set_style_pad_ver(entry, 6, 0);
+
+    lv_obj_t *label = lv_label_create(entry);
+    lv_label_set_text(label, text);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
+
+    return entry;
+}
+
 static lv_obj_t *create_button_with_label(lv_obj_t *parent, const char *text)
 {
     lv_obj_t *btn = lv_button_create(parent);
@@ -160,7 +193,7 @@ static void add_basic_widgets(lv_obj_t *parent)
 
     lv_obj_t *toggle_card = create_card(row, "lv_button checked state");
     lv_obj_t *toggle = create_button_with_label(toggle_card, "Toggle");
-    lv_obj_add_flag(toggle, LV_OBJ_FLAG_CHECKABLE);
+    lv_obj_set_checkable(toggle, true);
     lv_obj_set_style_bg_color(toggle, lv_color_hex(0x46515f), 0);
     lv_obj_set_style_bg_color(toggle, coffee_ui_color_primary(), LV_STATE_CHECKED);
 #endif
@@ -367,7 +400,7 @@ static void add_layout_examples(lv_obj_t *parent)
     lv_obj_set_size(drag, 54, 34);
     lv_obj_set_style_radius(drag, 8, 0);
     lv_obj_set_style_bg_color(drag, coffee_ui_color_primary(), 0);
-    lv_obj_add_flag(drag, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(drag, true);
     lv_obj_add_event_cb(drag, draggable_cb, LV_EVENT_PRESSING, NULL);
 }
 
@@ -378,7 +411,7 @@ static void add_styling_examples(lv_obj_t *parent)
 
     lv_obj_t *state_card = create_card(row, "Styles: checked/pressed");
     lv_obj_t *toggle = create_button_with_label(state_card, "Color");
-    lv_obj_add_flag(toggle, LV_OBJ_FLAG_CHECKABLE);
+    lv_obj_set_checkable(toggle, true);
     lv_obj_set_style_bg_color(toggle, coffee_ui_color_primary(), 0);
     lv_obj_set_style_bg_color(toggle, lv_color_hex(0x2b8da3), LV_STATE_PRESSED);
     lv_obj_add_event_cb(toggle, color_toggle_cb, LV_EVENT_VALUE_CHANGED, NULL);
@@ -432,16 +465,15 @@ static void add_advanced_widgets(lv_obj_t *parent)
     lv_label_set_text(label_two, "Second tab");
 #endif
 
-#if LV_USE_LIST
-    lv_obj_t *list_card = create_card(row, "lv_list");
+    /* lv_list is deprecated since LVGL 9.6; the replacement it points to is a
+     * scrollable flex column of buttons, which is what this card builds. */
+    lv_obj_t *list_card = create_card(row, "flex list");
     lv_obj_set_height(list_card, 190);
-    lv_obj_t *list = lv_list_create(list_card);
-    lv_obj_set_size(list, LV_PCT(92), 122);
-    lv_list_add_text(list, "Recipes");
-    lv_list_add_button(list, NULL, "Espresso");
-    lv_list_add_button(list, NULL, "Cappuccino");
-    lv_list_add_button(list, NULL, "Hot water");
-#endif
+    lv_obj_t *list = create_flex_list(list_card, "Recipes");
+    static const char *const recipes[] = {"Espresso", "Cappuccino", "Hot water"};
+    for (size_t i = 0; i < sizeof(recipes) / sizeof(recipes[0]); ++i) {
+        create_flex_list_button(list, recipes[i]);
+    }
 
 #if LV_USE_TABLE
     lv_obj_t *table_card = create_card(row, "lv_table");

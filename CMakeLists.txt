@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(lvgl_coffee_dispenser
-    VERSION 0.9.1
+    VERSION 0.9.2
     DESCRIPTION "LVGL Coffee Dispenser HMI prototype"
     LANGUAGES C CXX
 )
@@ -126,7 +126,6 @@ add_executable(lvgl_coffee_dispenser
 target_include_directories(lvgl_coffee_dispenser
     PRIVATE
         ${SDL2_INCLUDE_DIRS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/lvgl/src
 )
 
 target_compile_options(lvgl_coffee_dispenser PRIVATE -Wall -Wextra -Wpedantic ${SDL2_CFLAGS_OTHER})

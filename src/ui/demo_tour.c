@@ -33,7 +33,7 @@ static lv_obj_t *clickable_ancestor(lv_obj_t *obj)
     /* The caption may sit several levels below the control it belongs to, so
      * the search walks up until it finds something that takes clicks. */
     for (lv_obj_t *candidate = obj; candidate != NULL; candidate = lv_obj_get_parent(candidate)) {
-        if (lv_obj_has_flag(candidate, LV_OBJ_FLAG_CLICKABLE)) {
+        if (lv_obj_is_clickable(candidate)) {
             return candidate;
         }
     }

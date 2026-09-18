@@ -8,10 +8,8 @@
 #include "ui/perf_probe.h"
 #include "ui/ui_manager.h"
 
-#include "drivers/sdl/lv_sdl_keyboard.h"
-#include "drivers/sdl/lv_sdl_mouse.h"
-#include "drivers/sdl/lv_sdl_mousewheel.h"
-#include "drivers/sdl/lv_sdl_window.h"
+/* lvgl.h pulls in the SDL driver headers; including them from LVGL's private
+ * src tree is deprecated since 9.6. */
 #include "lvgl.h"
 
 #include <SDL2/SDL.h>

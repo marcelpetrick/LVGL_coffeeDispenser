@@ -19,8 +19,8 @@ void coffee_ui_apply_screen_background(lv_obj_t *screen)
 
     lv_obj_t *shine = lv_obj_create(screen);
     lv_obj_remove_style_all(shine);
-    lv_obj_add_flag(shine, LV_OBJ_FLAG_IGNORE_LAYOUT);
-    lv_obj_add_flag(shine, LV_OBJ_FLAG_FLOATING);
+    lv_obj_set_ignore_layout(shine, true);
+    lv_obj_set_floating(shine, true);
     lv_obj_set_size(shine, LV_PCT(70), LV_PCT(60));
     lv_obj_align(shine, LV_ALIGN_TOP_RIGHT, 120, -120);
     lv_obj_set_style_radius(shine, LV_RADIUS_CIRCLE, 0);
@@ -29,8 +29,8 @@ void coffee_ui_apply_screen_background(lv_obj_t *screen)
 
     lv_obj_t *cool_glow = lv_obj_create(screen);
     lv_obj_remove_style_all(cool_glow);
-    lv_obj_add_flag(cool_glow, LV_OBJ_FLAG_IGNORE_LAYOUT);
-    lv_obj_add_flag(cool_glow, LV_OBJ_FLAG_FLOATING);
+    lv_obj_set_ignore_layout(cool_glow, true);
+    lv_obj_set_floating(cool_glow, true);
     lv_obj_set_size(cool_glow, LV_PCT(56), LV_PCT(54));
     lv_obj_align(cool_glow, LV_ALIGN_BOTTOM_LEFT, -120, 120);
     lv_obj_set_style_radius(cool_glow, LV_RADIUS_CIRCLE, 0);
