@@ -18,6 +18,16 @@ if(COFFEE_ENABLE_COVERAGE)
 endif()
 add_test(NAME app_controller COMMAND test_app_controller)
 
+add_executable(test_perf_stats
+    test_perf_stats.c
+)
+target_link_libraries(test_perf_stats PRIVATE coffee_core)
+if(COFFEE_ENABLE_COVERAGE)
+    target_compile_options(test_perf_stats PRIVATE -O0 -g --coverage)
+    target_link_options(test_perf_stats PRIVATE --coverage)
+endif()
+add_test(NAME perf_stats COMMAND test_perf_stats)
+
 add_test(
     NAME app_startup_smoke
     COMMAND ${CMAKE_COMMAND} -E env

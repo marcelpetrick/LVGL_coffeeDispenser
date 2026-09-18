@@ -4,6 +4,7 @@
 #include "app_config.h"
 #include "platform/platform_log.h"
 #include "service/sim_dispenser_service.h"
+#include "ui/perf_probe.h"
 #include "ui/ui_manager.h"
 
 #include "drivers/sdl/lv_sdl_keyboard.h"
@@ -43,6 +44,9 @@ int main(void)
     coffee_ui_manager_t ui;
     coffee_ui_manager_init(&ui, &app);
 
+    static coffee_perf_probe_t perf_probe;
+    coffee_perf_probe_init(&perf_probe, display);
+
     uint32_t last_tick = SDL_GetTicks();
     uint32_t runtime_ms = 0;
     while (!coffee_ui_manager_wants_quit(&ui)) {
@@ -53,6 +57,7 @@ int main(void)
         runtime_ms += elapsed;
 
         lv_tick_inc(elapsed);
+        coffee_perf_probe_tick(&perf_probe);
         coffee_app_controller_tick(&app, elapsed);
         coffee_ui_manager_tick(&ui, elapsed);
         lv_timer_handler();
@@ -62,6 +67,8 @@ int main(void)
             break;
         }
     }
+
+    coffee_perf_probe_report(&perf_probe, runtime_ms);
 
     COFFEE_LOGI("shutdown");
     lv_sdl_quit();

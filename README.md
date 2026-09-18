@@ -9,7 +9,7 @@
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
 [![Coverage 82.9%](https://img.shields.io/badge/coverage-82.9%25-brightgreen.svg)](#quality-gate)
 [![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#quick-start)
-[![SemVer](https://img.shields.io/badge/semver-0.3.5-orange.svg)](#versioning)
+[![SemVer](https://img.shields.io/badge/semver-0.4.0-orange.svg)](#versioning)
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 
@@ -92,6 +92,19 @@ Generated output:
 | Cppcheck | `reports/cppcheck/cppcheck.xml`, `reports/cppcheck/html/index.html` |
 
 The last local run reported 82.9% line, 88.2% function, and 66.9% branch coverage.
+
+## Rendering Benchmark
+
+The application can profile its own rendering: `COFFEE_PERF_PROFILE=1` hooks the LVGL render and flush events and logs `[PERF]` lines with the per-frame timings on exit, `COFFEE_PERF_FORCE_REDRAW=1` invalidates the whole screen every iteration so runs are comparable.
+
+```bash
+cmake --preset linux-release && cmake --build --preset linux-release
+./scripts/run_render_benchmark.sh --duration-ms 10000        # headless, full-screen redraw
+./scripts/run_render_benchmark.sh --idle                     # idle UI instead
+./scripts/run_render_benchmark.sh --video-driver x11         # real window
+```
+
+The script writes `LVGL_<version>_benchmark.md` next to this file; see [LVGL_0.4.1_benchmark.md](LVGL_0.4.1_benchmark.md) for the latest measurement.
 
 ## Versioning
 
