@@ -12,6 +12,20 @@ The LVGL sources live in `external/lvgl` as a git submodule and must be initiali
 git submodule update --init --recursive
 ```
 
+## Versioning
+
+`project(... VERSION <major>.<minor>.<patch>)` in `CMakeLists.txt` is the single source of truth. It is injected into the build as the `COFFEE_APP_VERSION` compile definition and into the generated docs as the Doxygen `PROJECT_NUMBER`.
+
+Strict semantic versioning applies, starting from the `0.1.0` baseline:
+
+- **every commit** bumps at least the **patch** level, in the same commit as the change itself;
+- a notable feature bumps the **minor** level and resets the patch level to `0`;
+- the **major** level is bumped **only** when the repository owner explicitly asks for it.
+
+`localPipeline.sh` enforces this in its `Version` stage: the version must be a valid `MAJOR.MINOR.PATCH` triple and must be strictly greater than the baseline version (the version at `HEAD` when the working tree is dirty, otherwise the version at `HEAD~1`).
+
+Releases are cut by tagging `v<version>`; the release workflow refuses a tag that disagrees with `CMakeLists.txt`.
+
 ## Common Commands
 
 Configure + build (preferred path uses presets):
@@ -48,7 +62,9 @@ Full local validation (this is the canonical pre-commit gate, not just `ctest`):
 ./localPipeline.sh --verbose        # surface command output for every stage
 ```
 
-The pipeline runs: submodule init → configure → build → ctest → `clang-format --dry-run --Werror` → coverage build + report → Doxygen → Cppcheck → optional smoke launch. **It enforces an 80% line-coverage gate** (`COVERAGE_MIN_LINE_PERCENT` in `localPipeline.sh`) — dropping below the threshold fails the pipeline. `tools/full_check.sh` is just a wrapper around it.
+The pipeline runs: submodule init → version gate → configure → build → ctest → `clang-format --dry-run --Werror` → coverage build + report → Doxygen → Cppcheck → optional smoke launch. **It enforces an 80% line-coverage gate** (`COVERAGE_MIN_LINE_PERCENT` in `localPipeline.sh`) — dropping below the threshold fails the pipeline. `tools/full_check.sh` runs the same pipeline with `--no-run` forced.
+
+Every tool the pipeline touches is a hard requirement; a missing one aborts before the first stage: `git`, `cmake`, `clang-format`, `cppcheck`, `doxygen`, `gcov`, `gcovr`, `python3`, `timeout`.
 
 Coverage uses a **separate build directory** so debug and coverage objects do not collide:
 
@@ -59,11 +75,13 @@ cmake -S . -B build-coverage -G Ninja \
 cmake --build build-coverage --target coverage-html
 ```
 
+The `coverage` / `coverage-html` targets only exist when `gcovr` is found at configure time; both run CTest first and write `build-coverage/coverage/{coverage.txt,summary.json,html/index.html}`.
+
 Static analysis and docs (both also run inside the pipeline):
 
 ```bash
-./scripts/run_cppcheck.sh --build-dir build/linux-debug
-cmake --build build/linux-debug --target doxygen   # non-empty warnings.txt fails the pipeline
+./scripts/run_cppcheck.sh --build-dir build/linux-debug   # reports/cppcheck/{cppcheck.xml,html/}
+cmake --build build/linux-debug --target doxygen          # non-empty warnings.txt fails the pipeline
 ```
 
 Formatting check used by CI/local pipeline:
@@ -75,6 +93,16 @@ find config src tests -type f \( -name '*.c' -o -name '*.h' \) -print \
 
 `.clang-format` is LLVM-based with `ColumnLimit: 100`, `IndentWidth: 4`, Linux braces, right-aligned pointers.
 
+Packaging a runnable folder (used by the release workflow):
+
+```bash
+./tools/package_linux.sh build/linux-release dist/lvgl_coffee_dispenser
+```
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs the same `./localPipeline.sh --no-run --verbose` on every push/PR, so a green local pipeline is the best predictor of a green CI run. `.github/workflows/release.yml` is tag-driven (`v*`) and publishes the packaged Linux build plus the Doxygen HTML. Both check out submodules and full history (the version gate needs `HEAD~1`).
+
 ## Architecture
 
 The project intentionally splits along layers so the simulated backend and SDL frontend can be replaced without touching the core. The **rule** documented in `docs/architecture.md` is: the UI only requests state changes through `app_controller`; the controller is the only thing that talks to a `coffee_dispenser_service_t`.
@@ -83,11 +111,15 @@ The project intentionally splits along layers so the simulated backend and SDL f
 src/main.c          SDL bring-up, lv_init, tick loop, env-driven exit timer
 src/app/            beverage_model + app_controller state machine (HW-independent)
 src/service/        coffee_dispenser_service_t vtable + sim_dispenser_service
-src/ui/             ui_manager + screens/* (LVGL widgets only)
+src/ui/             ui_manager + ui_theme + assets/ + screens/* (LVGL widgets only)
 src/platform/       platform_log, platform_time wrappers
 config/             app_config.h (timings, default 800x480) + lv_conf.h
+docs/               architecture.md, ui-flow.md, build-and-deploy.md
+tools/, scripts/    packaging wrapper and Cppcheck driver
 external/lvgl/      submodule, built via add_subdirectory
 ```
+
+Screens are `home`, `beverage`, `dispense`, `error`, `settings`, `diagnostics` (compiled in via `COFFEE_ENABLE_DIAGNOSTICS`), and `showcase` — the last one is a pure LVGL widget gallery including the virtual keyboard, useful for eyeballing theming changes.
 
 State machine (`src/app/app_state.h`): `BOOTING → READY → BEVERAGE_SELECTED → CONFIRMING → DISPENSING → {COMPLETED, CANCELLED, ERROR} → READY`, plus `MAINTENANCE` and `SHUTDOWN`. The controller validates the request, asks the service `can_dispense`, only enters `DISPENSING` after the service acknowledges `start`, and maps `coffee_dispense_snapshot_t` progress into the visible state. UI flow in `docs/ui-flow.md`.
 
@@ -103,6 +135,9 @@ Build-time options (top of `CMakeLists.txt`):
 - `COFFEE_ENABLE_COVERAGE` (default OFF; requires GCC/Clang and `COFFEE_BUILD_TESTS=ON`)
 - `COFFEE_ENABLE_DIAGNOSTICS` (default ON; surfaces the diagnostics screen)
 - `COFFEE_ENABLE_FILE_LOGGING` (default OFF)
+- `COFFEE_BACKEND` (cache options `SDL`/`FBDEV`/`DRM`, but only `SDL` is implemented)
 - `COFFEE_DEFAULT_WIDTH` / `COFFEE_DEFAULT_HEIGHT` (default 800x480)
+
+Timings (`config/app_config.h`): `COFFEE_SPLASH_MS`, `COFFEE_COMPLETION_MS`, `COFFEE_CANCELLED_MS`, `COFFEE_TICK_MS`.
 
 When porting to embedded Linux, keep `src/app` and `src/service/dispenser_service.h` stable and replace `src/main.c` SDL bring-up plus the simulated service.
