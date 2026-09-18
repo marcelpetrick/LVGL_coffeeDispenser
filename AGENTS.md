@@ -2,6 +2,17 @@
 
 This file provides guidance to coding agents (Claude Code, Codex, and friends) when working with code in this repository.
 
+## Working Rules
+
+Good software craftsmanship is the point of this repository, so the process is part of the deliverable:
+
+- **Atomic commits.** One concern per commit, with a [Conventional Commits](https://www.conventionalcommits.org/) subject (`feat`, `fix`, `docs`, `test`, `ci`, `chore`, `refactor`) and a body that says *why*. A fix and the test that pins it belong together; unrelated cleanups do not.
+- **Bump the version in the same commit.** See [Versioning](#versioning); the pipeline rejects a commit that does not.
+- **Run the gate before committing:** `./localPipeline.sh --no-run`. Every stage has to pass, not just the tests.
+- **Cover what you add.** The line-coverage gate is 95%, the suite is at 100% of `coffee_core`; keep it there. Logic worth testing belongs in `coffee_core`, not in the LVGL layer, so it stays testable without a display.
+- **Fix the cause, not the symptom.** When a gate fails or a line stays uncovered, check whether the code is wrong before adjusting the test: the uncovered clamp in `sim_tick` and the unreachable p95 guard were both real defects.
+- **Keep the docs in step.** README, this file, and the generated docs are part of the change, not a follow-up.
+
 ## Project
 
 Desktop-first LVGL 9.x prototype of a touch coffee-dispenser HMI. Runs on Linux/SDL2 against a simulated dispenser backend, but the layering is meant to keep the controller and beverage model portable to embedded targets.
@@ -53,7 +64,9 @@ ctest --preset linux-debug -R beverage_model --output-on-failure   # single test
 ctest --test-dir build/linux-debug -R app_controller -V            # alternative
 ```
 
-Registered tests are `beverage_model`, `app_controller`, and `app_startup_smoke` (see `tests/CMakeLists.txt`).
+Registered tests are `beverage_model`, `app_controller`, `perf_stats`, `sim_dispenser_service`, and `app_startup_smoke` (see `tests/CMakeLists.txt`). The first four link `coffee_core` only, so they stay display-independent; the last one starts the real binary headlessly.
+
+Note that `ctest` may resolve to a pip-installed shim without the `cmake` module; use `/usr/bin/ctest` when that happens (the pipeline resolves the binary next to `cmake` by itself).
 
 Full local validation (this is the canonical pre-commit gate, not just `ctest`):
 
@@ -75,7 +88,7 @@ cmake -S . -B build-coverage -G Ninja \
 cmake --build build-coverage --target coverage-html
 ```
 
-The `coverage` / `coverage-html` targets only exist when `gcovr` is found at configure time; both run CTest first and write `build-coverage/coverage/{coverage.txt,summary.json,html/index.html}`.
+The `coverage` / `coverage-html` targets only exist when `gcovr` is found at configure time; both build the test executables, run CTest, and write `build-coverage/coverage/{coverage.txt,summary.json,html/index.html}`. Counter files from an older compiler make gcov fail with a version mismatch - the pipeline deletes stale `*.gcda` for that reason; do the same by hand when running the targets directly.
 
 Static analysis and docs (both also run inside the pipeline):
 
@@ -99,6 +112,19 @@ Packaging a runnable folder (used by the release workflow):
 ./tools/package_linux.sh build/linux-release dist/lvgl_coffee_dispenser
 ```
 
+## Rendering Benchmark
+
+The binary profiles its own rendering when the environment asks for it, which keeps the normal run free of instrumentation:
+
+```bash
+COFFEE_PERF_PROFILE=1 COFFEE_PERF_FORCE_REDRAW=1 COFFEE_EXIT_AFTER_STARTUP_MS=10000 \
+  SDL_VIDEODRIVER=dummy ./build/linux-release/lvgl_coffee_dispenser
+
+./scripts/run_render_benchmark.sh --duration-ms 15000    # same run, plus a Markdown report
+```
+
+`src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`, the percentile math is `src/platform/perf_stats.c` in `coffee_core` (and therefore unit-tested). The report lands in `LVGL_<version>_benchmark.md`; keep the latest one committed and reference it from the README. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
+
 ## Continuous Integration
 
 `.github/workflows/ci.yml` runs the same `./localPipeline.sh --no-run --verbose` on every push/PR, so a green local pipeline is the best predictor of a green CI run. `.github/workflows/release.yml` is tag-driven (`v*`) and publishes the packaged Linux build plus the Doxygen HTML. Both check out submodules and full history (the version gate needs `HEAD~1`).
@@ -111,11 +137,11 @@ The project intentionally splits along layers so the simulated backend and SDL f
 src/main.c          SDL bring-up, lv_init, tick loop, env-driven exit timer
 src/app/            beverage_model + app_controller state machine (HW-independent)
 src/service/        coffee_dispenser_service_t vtable + sim_dispenser_service
-src/ui/             ui_manager + ui_theme + assets/ + screens/* (LVGL widgets only)
-src/platform/       platform_log, platform_time wrappers
+src/ui/             ui_manager + ui_theme + perf_probe + assets/ + screens/* (LVGL only)
+src/platform/       platform_log, platform_time, perf_stats (percentile math)
 config/             app_config.h (timings, default 800x480) + lv_conf.h
 docs/               architecture.md, ui-flow.md, build-and-deploy.md
-tools/, scripts/    packaging wrapper and Cppcheck driver
+tools/, scripts/    packaging wrapper, Cppcheck driver, render benchmark
 external/lvgl/      submodule, built via add_subdirectory
 ```
 
