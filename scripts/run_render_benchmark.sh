@@ -31,7 +31,8 @@ Options:
   --runs N              Number of repeated runs; default: ${RUNS}
   --video-driver NAME   SDL video driver; default: ${VIDEO_DRIVER} (headless)
   --idle                Do not force redraws; measures the idle UI instead
-  --pin-cpu N           Pin the runs to CPU N; strongly recommended on a machine with
+  --pin-cpu LIST        Pin the runs to CPU LIST (taskset syntax: 0, 0-3, 0,2); strongly
+                        recommended on a machine with
                         frequency scaling or performance/efficiency cores
   --output FILE         Markdown report; default: LVGL_<lvgl version>_benchmark.md
   --help, -h            Show this help
@@ -45,7 +46,7 @@ while [[ "$#" -gt 0 ]]; do
         --runs) shift; RUNS="$1" ;;
         --video-driver) shift; VIDEO_DRIVER="$1" ;;
         --idle) FORCE_REDRAW=0 ;;
-        --pin-cpu) shift; PIN_CPU="$1" ;;
+        --pin-cpu) shift; PIN_CPU="$1" ;;  # validated below
         --output) shift; OUTPUT="$1" ;;
         --help|-h) print_usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; print_usage; exit 2 ;;
@@ -55,6 +56,11 @@ done
 
 if [[ ! "${RUNS}" =~ ^[0-9]+$ ]] || [[ "${RUNS}" -lt 1 ]]; then
     echo "--runs needs a positive number" >&2
+    exit 2
+fi
+
+if [[ -n "${PIN_CPU}" && ! "${PIN_CPU}" =~ ^[0-9]+([,-][0-9]+)*$ ]]; then
+    echo "--pin-cpu needs a CPU number or a taskset list such as 0 or 0-3" >&2
     exit 2
 fi
 
@@ -141,6 +147,7 @@ aggregate() {
 }
 
 run_table=""
+flush_matches_render=1
 render_means=""
 flush_means=""
 fps_values=""
@@ -159,6 +166,13 @@ for run in $(seq 1 "${RUNS}"); do
     flush_means+="${flush_mean}"$'\n'
     fps_values+="${fps}"$'\n'
     frame_counts+="${frames}"$'\n'
+
+    # LVGL can flush several areas per rendered frame, for example while a
+    # screen transition is running. Adding the two means is only a frame cost
+    # when every rendered frame was flushed exactly once.
+    if [[ "$(field "${log_file}" flush count)" != "${frames}" ]]; then
+        flush_matches_render=0
+    fi
 done
 
 read -r render_agg flush_agg fps_agg frames_agg <<<"$(paste -d' ' \
@@ -214,12 +228,20 @@ agg_row() {
     agg_row 'frames per run' "${frames_agg}"
     agg_row 'fps' "${fps_agg}"
 
-    printf '\nOne fully invalidated frame costs about %s us of CPU time (render + flush), which is a ' "${frame_us}"
-    printf 'capacity of roughly %s frames/s. The measured frame rate is the rate LVGL asks for: it ' "${capacity_fps}"
-    printf 'refreshes at most every LV_DEF_REFR_PERIOD = %s ms, so about %s frames/s is the ceiling of ' \
-        "${refresh_period}" "$((1000 / refresh_period))"
-    printf 'this configuration, and the difference between the two numbers is the headroom that is left '
-    printf 'for application logic on a slower target.\n\n'
+    if [[ "${flush_matches_render}" -eq 1 ]]; then
+        printf '\nOne fully invalidated frame costs about %s us of CPU time (render + flush), which is a ' "${frame_us}"
+        printf 'capacity of roughly %s frames/s. The measured frame rate is the rate LVGL asks for: it ' "${capacity_fps}"
+        printf 'refreshes at most every LV_DEF_REFR_PERIOD = %s ms, so about %s frames/s is the ceiling of ' \
+            "${refresh_period}" "$((1000 / refresh_period))"
+        printf 'this configuration, and the difference between the two numbers is the headroom that is left '
+        printf 'for application logic on a slower target.\n\n'
+    else
+        printf '\nAt least one run flushed more areas than it rendered frames, which happens while a '
+        printf 'screen transition splits a refresh into several flushed areas. The render and flush means '
+        printf 'therefore describe different populations and are not added up here. The measured frame '
+        printf 'rate is capped by LV_DEF_REFR_PERIOD = %s ms, about %s frames/s.\n\n' \
+            "${refresh_period}" "$((1000 / refresh_period))"
+    fi
     printf '`render` is the LVGL software rendering of the invalidated area, `flush` is handing the '
     printf 'rendered buffer to SDL. Both are measured inside the display driver through the LVGL render '
     printf 'and flush events, so the numbers exclude the main loop delay. With the `dummy` video driver '
