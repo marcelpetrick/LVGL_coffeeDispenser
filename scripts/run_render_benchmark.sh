@@ -70,7 +70,9 @@ if ! grep -q '\[PERF\] stage=summary' "${log_file}"; then
 fi
 
 field() {
-    sed -n "s/.*\[PERF\] stage=$1 .*[[:space:]]$2=\([^[:space:]]*\).*/\1/p" "${log_file}" | head -1
+    # The line is selected first, then the key is read from it: a pattern that
+    # spans both would need a separator before the first key, which is not there.
+    sed -n "/\[PERF\] stage=$1 /s/.*[[:space:]]$2=\([^[:space:]]*\).*/\1/p" "${log_file}" | head -1
 }
 
 render_row() {

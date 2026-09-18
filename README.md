@@ -9,7 +9,7 @@
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
 [![Coverage 82.9%](https://img.shields.io/badge/coverage-82.9%25-brightgreen.svg)](#quality-gate)
 [![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#quick-start)
-[![SemVer](https://img.shields.io/badge/semver-0.4.0-orange.svg)](#versioning)
+[![SemVer](https://img.shields.io/badge/semver-0.4.1-orange.svg)](#versioning)
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 
