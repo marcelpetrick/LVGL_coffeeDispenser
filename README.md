@@ -106,7 +106,7 @@ cmake --preset linux-release && cmake --build --preset linux-release
 ./scripts/run_render_benchmark.sh --video-driver x11         # real window
 ```
 
-The script repeats the measurement ten times and writes `LVGL_<version>_benchmark.md` next to this file, with one row per run and the spread across them; see [LVGL_0.6.0_benchmark.md](LVGL_0.6.0_benchmark.md) for the latest measurement.
+The script repeats the measurement ten times and writes `LVGL_<version>_benchmark.md` next to this file, with one row per run and the spread across them; see [LVGL_0.8.2_benchmark.md](LVGL_0.8.2_benchmark.md) for the latest measurement.
 
 ## Demo Recording
 
