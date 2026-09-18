@@ -3,7 +3,7 @@
 [![CI](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/ci.yml)
 [![Release](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml)
 [![License: GPL v3 or later](https://img.shields.io/badge/license-GPLv3%20or%20later-blue.svg)](LICENSE)
-[![LVGL 9.3.0](https://img.shields.io/badge/LVGL-9.3.0-4c9a2a.svg)](https://lvgl.io/)
+[![LVGL 9.6.0](https://img.shields.io/badge/LVGL-9.6.0-4c9a2a.svg)](https://lvgl.io/)
 [![SDL 2](https://img.shields.io/badge/SDL-2-1d4e89.svg)](https://www.libsdl.org/)
 [![CMake 3.30+](https://img.shields.io/badge/CMake-3.30%2B-064f8c.svg)](https://cmake.org/)
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
@@ -101,12 +101,12 @@ The application can profile its own rendering: `COFFEE_PERF_PROFILE=1` hooks the
 
 ```bash
 cmake --preset linux-release && cmake --build --preset linux-release
-./scripts/run_render_benchmark.sh                            # 10 runs, headless, full redraw
+./scripts/run_render_benchmark.sh --pin-cpu 0                # 10 runs, headless, full redraw
 ./scripts/run_render_benchmark.sh --runs 3 --idle            # idle UI instead
 ./scripts/run_render_benchmark.sh --video-driver x11         # real window
 ```
 
-The script repeats the measurement ten times and writes `LVGL_<version>_benchmark.md` next to this file, with one row per run and the spread across them; see [LVGL_0.8.2_benchmark.md](LVGL_0.8.2_benchmark.md) for the latest measurement.
+The script repeats the measurement ten times and writes `LVGL_<lvgl version>_benchmark.md` next to this file, with one row per run and the spread across them. `--pin-cpu` is worth using on any machine with frequency scaling or performance/efficiency cores: unpinned runs scatter far more than the differences being measured.
 
 ## Demo Recording
 

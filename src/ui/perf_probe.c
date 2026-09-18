@@ -97,12 +97,13 @@ void coffee_perf_probe_report(coffee_perf_probe_t *probe, uint32_t runtime_ms)
     const uint32_t fps_centi = coffee_perf_fps_centi(frames, runtime_ms);
     /* The SDL window is resizeable, so the measured area is the one the display
      * reports and not the configured default. */
+    const lv_color_format_t color_format = lv_display_get_color_format(probe->display);
     COFFEE_LOGI("[PERF] stage=summary runtime_ms=%u frames=%u fps=%u.%02u width=%d height=%d "
                 "color_depth=%d force_redraw=%d",
                 runtime_ms, frames, fps_centi / 100U, fps_centi % 100U,
                 (int)lv_display_get_horizontal_resolution(probe->display),
-                (int)lv_display_get_vertical_resolution(probe->display), LV_COLOR_DEPTH,
-                probe->force_redraw ? 1 : 0);
+                (int)lv_display_get_vertical_resolution(probe->display),
+                (int)lv_color_format_get_bpp(color_format), probe->force_redraw ? 1 : 0);
 }
 
 bool coffee_perf_probe_enabled(const coffee_perf_probe_t *probe)
