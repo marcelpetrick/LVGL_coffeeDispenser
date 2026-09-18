@@ -166,6 +166,7 @@ config/           app_config.h + lv_conf.h
 - [Architecture](docs/architecture.md) - layering rules and the UI/controller/service split.
 - [UI flow](docs/ui-flow.md) - screens and the transitions between them.
 - [Build and deploy](docs/build-and-deploy.md) - build paths, tooling outputs, packaging.
+- [Renderer comparison](docs/benchmark-lvgl-9.3-vs-9.6.html) - LVGL 9.3.0 against 9.6.0 on this HMI, rendered.
 - [Agent guide](AGENTS.md) - repository conventions for coding agents.
 - [Software engineering plan](SWE_PLAN.md) - the engineering plan this repository follows.
 - [License](LICENSE) - GPLv3 or later.

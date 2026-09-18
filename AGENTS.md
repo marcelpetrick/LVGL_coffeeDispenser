@@ -12,10 +12,11 @@ Good software craftsmanship is the point of this repository, so the process is p
 - **Cover what you add.** The line-coverage gate is 95%, the suite is at 100% of `coffee_core`; keep it there. Logic worth testing belongs in `coffee_core`, not in the LVGL layer, so it stays testable without a display.
 - **Fix the cause, not the symptom.** When a gate fails or a line stays uncovered, check whether the code is wrong before adjusting the test: the uncovered clamp in `sim_tick` and the unreachable p95 guard were both real defects.
 - **Keep the docs in step.** README, this file, and the generated docs are part of the change, not a follow-up.
+- **Stay on the pinned LVGL's current API.** Include `lvgl.h` only - the headers under `external/lvgl/src` are deprecation shims since 9.6. Use the per-flag setters and getters (`lv_obj_set_clickable`, `lv_obj_is_clickable`, ...) rather than `lv_obj_add_flag`/`lv_obj_has_flag`, and avoid widgets LVGL marks deprecated, such as `lv_list` (a scrollable flex column replaces it). A deprecation warning in the build is a defect like any other.
 
 ## Project
 
-Desktop-first LVGL 9.x prototype of a touch coffee-dispenser HMI. Runs on Linux/SDL2 against a simulated dispenser backend, but the layering is meant to keep the controller and beverage model portable to embedded targets.
+Desktop-first LVGL prototype of a touch coffee-dispenser HMI, pinned to LVGL 9.6.0 through the submodule. Runs on Linux/SDL2 against a simulated dispenser backend, but the layering is meant to keep the controller and beverage model portable to embedded targets.
 
 The LVGL sources live in `external/lvgl` as a git submodule and must be initialized before configuring:
 
@@ -120,10 +121,12 @@ The binary profiles its own rendering when the environment asks for it, which ke
 COFFEE_PERF_PROFILE=1 COFFEE_PERF_FORCE_REDRAW=1 COFFEE_EXIT_AFTER_STARTUP_MS=10000 \
   SDL_VIDEODRIVER=dummy ./build/linux-release/lvgl_coffee_dispenser
 
-./scripts/run_render_benchmark.sh --runs 10              # repeated runs, plus a Markdown report
+./scripts/run_render_benchmark.sh --runs 10 --pin-cpu 0  # repeated runs, plus a Markdown report
 ```
 
-`src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`, the percentile math is `src/platform/perf_stats.c` in `coffee_core` (and therefore unit-tested). The report lands in `LVGL_<version>_benchmark.md` and covers ten runs, so the spread is visible; keep the latest one committed, drop the superseded one, and reference it from the README. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
+`src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`; in force-redraw mode it re-dirties the screen from `LV_EVENT_REFR_READY`, which is exactly one full-screen invalidation per rendered frame - invalidating from the main loop instead piles up redundant areas and cost 14% of the frame time. The percentile math is `src/platform/perf_stats.c` in `coffee_core` and is therefore unit-tested.
+
+The report is named after the measured LVGL release (`LVGL_9.6.0_benchmark.md`), so keep one per release instead of replacing it, and pass `--pin-cpu` on any machine with frequency scaling or hybrid cores - unpinned runs scatter several times wider than the effects being measured. `docs/benchmark-lvgl-9.3-vs-9.6.html` compares two releases; regenerate both sides with the same probe whenever the harness changes, otherwise the comparison is not like for like. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
 
 ## Demo Recording
 
