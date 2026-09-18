@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
           # The version gate compares against HEAD~1, so a shallow clone of a
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload the generated reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: coffee-dispenser-reports
           if-no-files-found: ignore
