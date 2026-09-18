@@ -18,6 +18,7 @@ DURATION_MS=5000
 RUNS=10
 VIDEO_DRIVER="dummy"
 FORCE_REDRAW=1
+PIN_CPU=""
 OUTPUT=""
 
 print_usage() {
@@ -30,7 +31,9 @@ Options:
   --runs N              Number of repeated runs; default: ${RUNS}
   --video-driver NAME   SDL video driver; default: ${VIDEO_DRIVER} (headless)
   --idle                Do not force redraws; measures the idle UI instead
-  --output FILE         Markdown report; default: LVGL_<project version>_benchmark.md
+  --pin-cpu N           Pin the runs to CPU N; strongly recommended on a machine with
+                        frequency scaling or performance/efficiency cores
+  --output FILE         Markdown report; default: LVGL_<lvgl version>_benchmark.md
   --help, -h            Show this help
 EOF
 }
@@ -42,6 +45,7 @@ while [[ "$#" -gt 0 ]]; do
         --runs) shift; RUNS="$1" ;;
         --video-driver) shift; VIDEO_DRIVER="$1" ;;
         --idle) FORCE_REDRAW=0 ;;
+        --pin-cpu) shift; PIN_CPU="$1" ;;
         --output) shift; OUTPUT="$1" ;;
         --help|-h) print_usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; print_usage; exit 2 ;;
@@ -62,10 +66,16 @@ if [[ ! -x "${executable}" ]]; then
 fi
 
 project_version="$(sed -n 's/^[[:space:]]*VERSION[[:space:]]\+\([0-9]\+\.[0-9]\+\.[0-9]\+\)[[:space:]]*$/\1/p' "${PROJECT_ROOT}/CMakeLists.txt" | head -1)"
-lvgl_version="$(sed -n 's/^#define LVGL_VERSION_\(MAJOR\|MINOR\|PATCH\)[[:space:]]\+\([0-9]\+\)$/\2/p' "${PROJECT_ROOT}/external/lvgl/lv_version.h" | paste -sd. -)"
+# Since 9.6 the headers live in include/lvgl/; the old path is a deprecation shim.
+lvgl_version_header="${PROJECT_ROOT}/external/lvgl/include/lvgl/lv_version.h"
+if [[ ! -f "${lvgl_version_header}" ]]; then
+    lvgl_version_header="${PROJECT_ROOT}/external/lvgl/lv_version.h"
+fi
+lvgl_version="$(sed -n 's/^#define LVGL_VERSION_\(MAJOR\|MINOR\|PATCH\)[[:space:]]\+\([0-9]\+\)$/\2/p' "${lvgl_version_header}" | paste -sd. -)"
 refresh_period="$(sed -n 's/^#define LV_DEF_REFR_PERIOD[[:space:]]\+\([0-9]\+\).*/\1/p' \
     "${PROJECT_ROOT}/config/lv_conf.h" "${PROJECT_ROOT}/external/lvgl/lv_conf_template.h" | head -1)"
-OUTPUT="${OUTPUT:-${PROJECT_ROOT}/LVGL_${project_version}_benchmark.md}"
+# Named after the measured LVGL release, so results stay comparable across bumps.
+OUTPUT="${OUTPUT:-${PROJECT_ROOT}/LVGL_${lvgl_version}_benchmark.md}"
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
@@ -76,10 +86,21 @@ field() {
     sed -n "/\[PERF\] stage=$2 /s/.*[[:space:]]$3=\([^[:space:]]*\).*/\1/p" "$1" | head -1
 }
 
+# Frequency scaling and hybrid CPUs move a run between cores and clock states,
+# which swamps a double-digit difference; pinning removes most of that spread.
+pin_command=""
+if [[ -n "${PIN_CPU}" ]]; then
+    if ! command -v taskset >/dev/null 2>&1; then
+        echo "--pin-cpu needs taskset" >&2
+        exit 1
+    fi
+    pin_command="taskset -c ${PIN_CPU}"
+fi
+
 for run in $(seq 1 "${RUNS}"); do
     log_file="${work_dir}/run_${run}.log"
     echo "[INFO] run ${run}/${RUNS}: ${DURATION_MS} ms (driver=${VIDEO_DRIVER}, force_redraw=${FORCE_REDRAW})"
-    SDL_VIDEODRIVER="${VIDEO_DRIVER}" \
+    ${pin_command} env SDL_VIDEODRIVER="${VIDEO_DRIVER}" \
         COFFEE_PERF_PROFILE=1 \
         COFFEE_PERF_FORCE_REDRAW="${FORCE_REDRAW}" \
         COFFEE_EXIT_AFTER_STARTUP_MS="${DURATION_MS}" \
@@ -170,11 +191,12 @@ agg_row() {
     printf -- '- Date: %s\n' "$(date -u '+%Y-%m-%d %H:%M:%SZ')"
     printf -- '- Application version: %s\n' "${project_version}"
     printf -- '- LVGL version: %s (software renderer, single draw unit, no GPU)\n' "${lvgl_version}"
-    printf -- '- Resolution: %s x %s, LV_COLOR_DEPTH %s\n' "${width}" "${height}" "${color_depth}"
+    printf -- '- Resolution: %s x %s, %s bit per pixel\n' "${width}" "${height}" "${color_depth}"
     printf -- '- SDL video driver: `%s`\n' "${VIDEO_DRIVER}"
     printf -- '- Workload: %s\n' \
         "$([[ "${FORCE_REDRAW}" -eq 1 ]] && echo 'full-screen invalidation every main-loop iteration' || echo 'idle UI, only the invalidations the application triggers itself')"
-    printf -- '- Runs: %s x %s ms\n' "${RUNS}" "${DURATION_MS}"
+    printf -- '- Runs: %s x %s ms%s\n' "${RUNS}" "${DURATION_MS}" \
+        "$([[ -n "${PIN_CPU}" ]] && echo ", pinned to CPU ${PIN_CPU}" || echo '')"
     printf -- '- CPU: %s\n' "${cpu_model}"
     printf -- '- Compiler: %s\n' "${compiler}"
     printf -- '- Kernel: %s\n\n' "$(uname -sr)"
@@ -204,8 +226,9 @@ agg_row() {
     printf 'no GPU or compositor is involved; use `--video-driver x11` to include the real presentation '
     printf 'path.\n\n'
     printf 'Reproduce with:\n\n'
-    printf '```bash\n./scripts/run_render_benchmark.sh --runs %s --duration-ms %s%s\n```\n' \
-        "${RUNS}" "${DURATION_MS}" "$([[ "${FORCE_REDRAW}" -eq 1 ]] && echo '' || echo ' --idle')"
+    printf '```bash\n./scripts/run_render_benchmark.sh --runs %s --duration-ms %s%s%s\n```\n' \
+        "${RUNS}" "${DURATION_MS}" "$([[ -n "${PIN_CPU}" ]] && echo " --pin-cpu ${PIN_CPU}" || echo '')" \
+        "$([[ "${FORCE_REDRAW}" -eq 1 ]] && echo '' || echo ' --idle')"
 } > "${OUTPUT}"
 
 echo "[INFO] report written to ${OUTPUT}"
