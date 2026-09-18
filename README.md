@@ -9,7 +9,7 @@
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
 [![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#quality-gate)
 [![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#quick-start)
-[![SemVer](https://img.shields.io/badge/semver-0.5.1-orange.svg)](#versioning)
+[![SemVer](https://img.shields.io/badge/versioning-semver-orange.svg)](#versioning)
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 
@@ -99,12 +99,12 @@ The application can profile its own rendering: `COFFEE_PERF_PROFILE=1` hooks the
 
 ```bash
 cmake --preset linux-release && cmake --build --preset linux-release
-./scripts/run_render_benchmark.sh --duration-ms 10000        # headless, full-screen redraw
-./scripts/run_render_benchmark.sh --idle                     # idle UI instead
+./scripts/run_render_benchmark.sh                            # 10 runs, headless, full redraw
+./scripts/run_render_benchmark.sh --runs 3 --idle            # idle UI instead
 ./scripts/run_render_benchmark.sh --video-driver x11         # real window
 ```
 
-The script writes `LVGL_<version>_benchmark.md` next to this file; see [LVGL_0.4.1_benchmark.md](LVGL_0.4.1_benchmark.md) for the latest measurement.
+The script repeats the measurement ten times and writes `LVGL_<version>_benchmark.md` next to this file, with one row per run and the spread across them; see [LVGL_0.6.0_benchmark.md](LVGL_0.6.0_benchmark.md) for the latest measurement.
 
 ## Versioning
 

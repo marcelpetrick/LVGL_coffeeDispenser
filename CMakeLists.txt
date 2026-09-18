@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(lvgl_coffee_dispenser
-    VERSION 0.5.3
+    VERSION 0.6.0
     DESCRIPTION "LVGL Coffee Dispenser HMI prototype"
     LANGUAGES C CXX
 )

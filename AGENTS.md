@@ -120,10 +120,10 @@ The binary profiles its own rendering when the environment asks for it, which ke
 COFFEE_PERF_PROFILE=1 COFFEE_PERF_FORCE_REDRAW=1 COFFEE_EXIT_AFTER_STARTUP_MS=10000 \
   SDL_VIDEODRIVER=dummy ./build/linux-release/lvgl_coffee_dispenser
 
-./scripts/run_render_benchmark.sh --duration-ms 15000    # same run, plus a Markdown report
+./scripts/run_render_benchmark.sh --runs 10              # repeated runs, plus a Markdown report
 ```
 
-`src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`, the percentile math is `src/platform/perf_stats.c` in `coffee_core` (and therefore unit-tested). The report lands in `LVGL_<version>_benchmark.md`; keep the latest one committed and reference it from the README. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
+`src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`, the percentile math is `src/platform/perf_stats.c` in `coffee_core` (and therefore unit-tested). The report lands in `LVGL_<version>_benchmark.md` and covers ten runs, so the spread is visible; keep the latest one committed, drop the superseded one, and reference it from the README. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
 
 ## Continuous Integration
 
