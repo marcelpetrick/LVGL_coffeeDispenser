@@ -1,5 +1,16 @@
 # LVGL Coffee Dispenser HMI
 
+[![CI](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/ci.yml/badge.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/ci.yml)
+[![Release](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml)
+[![License: GPL v3 or later](https://img.shields.io/badge/license-GPLv3%20or%20later-blue.svg)](LICENSE)
+[![LVGL 9.3.0](https://img.shields.io/badge/LVGL-9.3.0-4c9a2a.svg)](https://lvgl.io/)
+[![SDL 2](https://img.shields.io/badge/SDL-2-1d4e89.svg)](https://www.libsdl.org/)
+[![CMake 3.30+](https://img.shields.io/badge/CMake-3.30%2B-064f8c.svg)](https://cmake.org/)
+[![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
+[![Coverage 82.9%](https://img.shields.io/badge/coverage-82.9%25-brightgreen.svg)](#coverage)
+[![Platform: Linux x86-64](https://img.shields.io/badge/platform-Linux%20x86--64-lightgrey.svg)](#build)
+[![SemVer](https://img.shields.io/badge/semver-0.3.4-orange.svg)](#versioning)
+
 This repository contains a desktop-first LVGL prototype for a touch-based coffee dispenser HMI. It is a test project and software-engineering exercise: the current implementation runs on Linux with SDL2 and a simulated dispenser backend, while the code is structured so application logic, UI, service abstraction, platform helpers, tests, and tooling stay separated.
 
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
@@ -217,7 +228,7 @@ Coverage reports are written to:
 - `build-coverage/coverage/summary.json`
 - `build-coverage/coverage/html/index.html`
 
-The local pipeline currently requires at least 80% line coverage.
+The local pipeline currently requires at least 80% line coverage. The last local run reported 82.9% lines, 88.2% functions, and 66.9% branches; the coverage badge above is updated from that report.
 
 ## Package
 
