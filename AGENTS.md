@@ -125,6 +125,10 @@ COFFEE_PERF_PROFILE=1 COFFEE_PERF_FORCE_REDRAW=1 COFFEE_EXIT_AFTER_STARTUP_MS=10
 
 `src/ui/perf_probe.c` hooks `LV_EVENT_RENDER_START/READY` and `LV_EVENT_FLUSH_START/FINISH`, the percentile math is `src/platform/perf_stats.c` in `coffee_core` (and therefore unit-tested). The report lands in `LVGL_<version>_benchmark.md` and covers ten runs, so the spread is visible; keep the latest one committed, drop the superseded one, and reference it from the README. Measured FPS is capped by `LV_DEF_REFR_PERIOD` (33 ms), so the meaningful number is the per-frame render + flush cost.
 
+## Demo Recording
+
+`src/ui/demo_tour.c` clicks through the UI on a timer when `COFFEE_DEMO_TOUR=1` is set. Steps name the caption of the control they activate, so the script follows the widgets rather than pixel coordinates; a caption that is not on the active screen is logged and skipped. `scripts/record_demo_gif.sh` runs that tour on a private Xvfb display and turns the capture into `media/demo.gif`, which the README embeds. Re-record it when the UI changes visibly.
+
 ## Continuous Integration
 
 `.github/workflows/ci.yml` runs the same `./localPipeline.sh --no-run --verbose` on every push/PR, so a green local pipeline is the best predictor of a green CI run. `.github/workflows/release.yml` is tag-driven (`v*`) and publishes the packaged Linux build plus the Doxygen HTML. Both check out submodules and full history (the version gate needs `HEAD~1`).
@@ -137,7 +141,7 @@ The project intentionally splits along layers so the simulated backend and SDL f
 src/main.c          SDL bring-up, lv_init, tick loop, env-driven exit timer
 src/app/            beverage_model + app_controller state machine (HW-independent)
 src/service/        coffee_dispenser_service_t vtable + sim_dispenser_service
-src/ui/             ui_manager + ui_theme + perf_probe + assets/ + screens/* (LVGL only)
+src/ui/             ui_manager + ui_theme + perf_probe + demo_tour + screens/* (LVGL)
 src/platform/       platform_log, platform_time, perf_stats (percentile math)
 config/             app_config.h (timings, default 800x480) + lv_conf.h
 docs/               architecture.md, ui-flow.md, build-and-deploy.md

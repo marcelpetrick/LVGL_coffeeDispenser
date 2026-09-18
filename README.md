@@ -13,6 +13,8 @@
 
 A desktop-first LVGL prototype of a touch coffee-dispenser HMI: beverage selection, confirmation, dispensing progress, completion, cancellation, settings, diagnostics, and error handling. It runs on Linux/SDL2 against a simulated dispenser backend, with application logic, UI, service abstraction, platform helpers, tests, and tooling kept in separate layers.
 
+![Scripted tour through the HMI](media/demo.gif)
+
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
 
 **Note: projected is generated with AI.**
@@ -105,6 +107,15 @@ cmake --preset linux-release && cmake --build --preset linux-release
 ```
 
 The script repeats the measurement ten times and writes `LVGL_<version>_benchmark.md` next to this file, with one row per run and the spread across them; see [LVGL_0.6.0_benchmark.md](LVGL_0.6.0_benchmark.md) for the latest measurement.
+
+## Demo Recording
+
+The GIF above is generated, not hand-recorded: `COFFEE_DEMO_TOUR=1` makes the application click its own way through drink selection, dispensing, settings, and the widget showcase, and the recorder captures that on a private Xvfb display (needs `Xvfb` and `ffmpeg`, no input-injection tooling).
+
+```bash
+./scripts/record_demo_gif.sh                     # writes media/demo.gif
+./scripts/record_demo_gif.sh --duration-s 15 --fps 15
+```
 
 ## Versioning
 

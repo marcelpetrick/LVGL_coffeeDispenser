@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 
 project(lvgl_coffee_dispenser
-    VERSION 0.6.0
+    VERSION 0.7.0
     DESCRIPTION "LVGL Coffee Dispenser HMI prototype"
     LANGUAGES C CXX
 )
@@ -101,6 +101,7 @@ endif()
 add_executable(lvgl_coffee_dispenser
     src/main.c
     src/ui/assets/beverage_icons.c
+    src/ui/demo_tour.c
     src/ui/perf_probe.c
     src/ui/ui_manager.c
     src/ui/ui_theme.c
