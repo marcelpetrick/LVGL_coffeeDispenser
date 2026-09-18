@@ -38,6 +38,8 @@ Strict semantic versioning applies, starting from the `0.1.0` baseline:
 
 Releases are cut by tagging `v<version>`; the release workflow refuses a tag that disagrees with `CMakeLists.txt`.
 
+After a bump of LVGL or of anything else that can move rendering cost, re-run the paired benchmark against the previous version and update the result table and the published comparison the README links to - a version bump without a measurement leaves the claim in the README describing the wrong library.
+
 ## Common Commands
 
 Configure + build (preferred path uses presets):

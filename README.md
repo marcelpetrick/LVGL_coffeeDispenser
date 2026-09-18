@@ -4,6 +4,7 @@
 [![Release](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/LVGL_coffeeDispenser/actions/workflows/release.yml)
 [![License: GPL v3 or later](https://img.shields.io/badge/license-GPLv3%20or%20later-blue.svg)](LICENSE)
 [![LVGL 9.6.0](https://img.shields.io/badge/LVGL-9.6.0-4c9a2a.svg)](https://lvgl.io/)
+[![Benchmark: LVGL 9.6 vs 9.3](https://img.shields.io/badge/benchmark-9.6%20vs%209.3%3A%20%E2%88%927%25%20render-4c9a2a.svg)](https://marcelpetrick.github.io/LVGL_coffeeDispenser/benchmark-lvgl-9.3-vs-9.6.html)
 [![SDL 2](https://img.shields.io/badge/SDL-2-1d4e89.svg)](https://www.libsdl.org/)
 [![CMake 3.30+](https://img.shields.io/badge/CMake-3.30%2B-064f8c.svg)](https://cmake.org/)
 [![C23](https://img.shields.io/badge/C-23-00599c.svg)](https://en.cppreference.com/w/c/23)
@@ -97,7 +98,19 @@ The last local run reported 100% line, 100% function, and 93.0% branch coverage 
 
 ## Rendering Benchmark
 
-The application can profile its own rendering: `COFFEE_PERF_PROFILE=1` hooks the LVGL render and flush events and logs `[PERF]` lines with the per-frame timings on exit, `COFFEE_PERF_FORCE_REDRAW=1` invalidates the whole screen every iteration so runs are comparable.
+**Latest result, LVGL 9.6.0 against 9.3.0 on this HMI** - measured after the library was bumped, eight back-to-back pairs on a pinned core:
+
+| | 9.3.0 | 9.6.0 | change |
+| --- | ---: | ---: | ---: |
+| render per frame | 4997 us | 4632 us | **-7.1%** (paired median) |
+| flush per frame | 3588 us | 3576 us | unchanged |
+| LVGL heap peak | 40752 B | 42008 B | +3.1% |
+| process peak RSS | 11.7 MB | 13.5 MB | +16% |
+
+Full write-up with every pair, the memory split and what the measurement does not cover:
+**<https://marcelpetrick.github.io/LVGL_coffeeDispenser/benchmark-lvgl-9.3-vs-9.6.html>**
+
+The application profiles its own rendering: `COFFEE_PERF_PROFILE=1` hooks the LVGL render and flush events and logs `[PERF]` lines with the per-frame timings and the memory figures on exit, `COFFEE_PERF_FORCE_REDRAW=1` re-dirties the whole screen once per refresh so runs are comparable.
 
 ```bash
 cmake --preset linux-release && cmake --build --preset linux-release
@@ -110,7 +123,7 @@ cmake --preset linux-release && cmake --build --preset linux-release
 
 The script repeats the measurement ten times and writes `LVGL_<lvgl version>_benchmark.md` next to this file, with one row per run and the spread across them. `--pin-cpu` is worth using on any machine with frequency scaling or performance/efficiency cores: unpinned runs scatter far more than the differences being measured.
 
-Current reports: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md), plus a rendered before/after comparison at [marcelpetrick.github.io/LVGL_coffeeDispenser](https://marcelpetrick.github.io/LVGL_coffeeDispenser/benchmark-lvgl-9.3-vs-9.6.html). Short version: the 9.6 software renderer needs about 7% less CPU time per fully redrawn 800x480 frame (measured as back-to-back pairs, since the absolute numbers drift more than the effect), and costs about 1.8 MB more resident memory while LVGL's own heap grows by 1.3 KB.
+Raw reports, one per measured LVGL release: [LVGL 9.6.0](LVGL_9.6.0_benchmark.md) and [LVGL 9.3.0](LVGL_9.3.0_benchmark.md). Compare releases with `--compare` rather than by reading two reports side by side: absolute numbers drift with temperature and background load by more than the effect being measured, while the pairs do not.
 
 ## Demo Recording
 
